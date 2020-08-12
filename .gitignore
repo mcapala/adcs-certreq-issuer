@@ -26,4 +26,6 @@ bin
 .vs
 .vscode
 
-config/samples/s*
+examples/*
+issuers/testdata/pkcs7.pem
+issuers/testdata/x509.pem
