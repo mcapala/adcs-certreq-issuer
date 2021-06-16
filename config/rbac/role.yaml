@@ -73,6 +73,13 @@ rules:
   - update
   - patch
 - apiGroups:
+  - cert-manager.io
+  resources:
+  - certificates/finalizers
+  - certificaterequests/finalizers
+  verbs:
+  - '*'
+- apiGroups:
   - ""
   resources:
   - events
@@ -98,9 +105,3 @@ rules:
   - get
   - update
   - patch
-- apiGroups:
-    - rbacmanager.reactiveops.io
-  resources:
-    - rbacdefinitions/finalizers
-  verbs:
-    - "*"
