@@ -132,6 +132,8 @@ This controller is implemented using [kubebuilder](https://github.com/kubernetes
 Generated CRD manifests are stored in `config/crd`. RBAC roles and bindings can be found in config/rbac. There's also a Make target to build controller's Docker image and
 store it in local docker repo (Docker must be installed).
 
+More specific install instructions can be found in `README-DEV.md`
+
 ## Testing considerations
 
 ### ADCS Simulator
