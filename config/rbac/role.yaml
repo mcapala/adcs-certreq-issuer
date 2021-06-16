@@ -105,9 +105,3 @@ rules:
   - get
   - update
   - patch
-- apiGroups:
-    - rbacmanager.reactiveops.io
-  resources:
-    - rbacdefinitions/finalizers
-  verbs:
-    - "*"
