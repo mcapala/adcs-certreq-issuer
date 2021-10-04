@@ -93,6 +93,7 @@ func main() {
 		MetricsBindAddress:     metricsAddr,
 		HealthProbeBindAddress: healthcheckAddr,
 		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "adcs-issuer-controller",
 		Port:                   port,
 	})
 	if err != nil {

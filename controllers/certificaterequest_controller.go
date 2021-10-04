@@ -49,8 +49,8 @@ var (
 )
 
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=events,verbs=patch
+// +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status;certificates/finalizers;certificaterequests/finalizers,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=patch;create
 
 func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("certificaterequest", req.NamespacedName)

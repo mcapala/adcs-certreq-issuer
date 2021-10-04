@@ -7,6 +7,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	//validationutils "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -25,7 +26,7 @@ func (r *AdcsIssuer) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=true,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,verbs=create;update,versions=v1,name=adcsissuer-mutation.adcs.certmanager.csf.nokia.com
+// +kubebuilder:webhook:path=/mutate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=true,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,verbs=create;update,versions=v1,name=adcsissuer-mutation.adcs.certmanager.csf.nokia.com,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &AdcsIssuer{}
 
@@ -41,7 +42,7 @@ func (r *AdcsIssuer) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=false,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,versions=v1,name=adcsissuer-validation.adcs.certmanager.csf.nokia.com
+// +kubebuilder:webhook:verbs=create;update,path=/validate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=false,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,versions=v1,name=adcsissuer-validation.adcs.certmanager.csf.nokia.com,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Validator = &AdcsIssuer{}
 

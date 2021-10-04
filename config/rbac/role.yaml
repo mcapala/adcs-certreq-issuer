@@ -11,6 +11,7 @@ rules:
   resources:
   - events
   verbs:
+  - create
   - patch
 - apiGroups:
   - ""
@@ -93,7 +94,9 @@ rules:
 - apiGroups:
   - cert-manager.io
   resources:
+  - certificaterequests/finalizers
   - certificaterequests/status
+  - certificates/finalizers
   verbs:
   - get
   - patch

@@ -22,6 +22,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	//validationutils "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -43,7 +44,7 @@ func (r *ClusterAdcsIssuer) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=true,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,verbs=create;update,versions=v1,name=mclusteradcsissuer.kb.io
+// +kubebuilder:webhook:path=/mutate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=true,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,verbs=create;update,versions=v1,name=mclusteradcsissuer.kb.io,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &ClusterAdcsIssuer{}
 
@@ -60,7 +61,7 @@ func (r *ClusterAdcsIssuer) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=false,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,versions=v1,name=vclusteradcsissuer.kb.io
+// +kubebuilder:webhook:verbs=create;update,path=/validate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=false,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,versions=v1,name=vclusteradcsissuer.kb.io,sideEffects=None,admissionReviewVersions=v1
 
 var _ webhook.Validator = &ClusterAdcsIssuer{}
 
