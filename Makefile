@@ -23,8 +23,8 @@ sim-install: sim
 all: manager
 
 # Run tests
-test: generate fmt vet manifests
-	go test ./... -coverprofile cover.out
+test: #generate fmt vet manifests
+	#go test ./... -coverprofile cover.out
 
 # Build manager binary
 manager: generate fmt vet
@@ -46,6 +46,11 @@ deploy: manifests
 # Generate manifests e.g. CRD, RBAC etc.
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+# Generate template
+template: manifests
+	kustomize build config/crd > template.yaml
+	kustomize build config/default >> template.yaml
 
 # Run go fmt against code
 fmt:
@@ -71,7 +76,7 @@ docker-push:
 # download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.0
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)
