@@ -20,9 +20,8 @@ import (
 	"os"
 	"strconv"
 
-	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
-	batchv1 "github.com/nokia/adcs-issuer/api/v1"
 	"github.com/nokia/adcs-issuer/controllers"
 	"github.com/nokia/adcs-issuer/healthcheck"
 	"github.com/nokia/adcs-issuer/issuers"
@@ -49,7 +48,6 @@ func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
 	_ = certmanager.AddToScheme(scheme)
 	_ = adcsv1.AddToScheme(scheme)
-	_ = batchv1.AddToScheme(scheme)
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -152,7 +150,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&batchv1.ClusterAdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&adcsv1.ClusterAdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterAdcsIssuer")
 		os.Exit(1)
 	}
