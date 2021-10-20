@@ -27,7 +27,7 @@ spec:
         - /manager
         args:
         - --enable-leader-election
-        image: controller:latest
+        image: ctrought/adcs-issuer:0.3
         name: manager
         resources:
           limits:
