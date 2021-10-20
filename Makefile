@@ -50,6 +50,7 @@ manifests: controller-gen
 # Generate template
 template: manifests
 	kustomize build config/crd > template.yaml
+	echo "---" >> template.yaml
 	kustomize build config/default >> template.yaml
 
 # Run go fmt against code
