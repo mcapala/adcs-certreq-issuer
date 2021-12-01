@@ -63,8 +63,9 @@ jobs:
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
         with:
-          name: siemp/adcs-controller
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          name: pearj/adcs-issuer
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           buildargs: VERSION
           tags: "latest,${{ env.VERSION }}"

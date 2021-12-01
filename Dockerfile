@@ -1,6 +1,9 @@
 # Build the manager binary
 FROM golang:1.12.5 as builder
 
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get upgrade -y && apt clean
+
 WORKDIR /workspace
 
 #ENV http_proxy=http://defraprx-fihelprx.glb.nsn-net.net:8080

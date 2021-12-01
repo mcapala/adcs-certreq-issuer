@@ -17,8 +17,8 @@ jobs:
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
         with:
-          name: siemp/adcs-controller
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          name: ghcr.io/pearj/adcs-issuer
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
           buildargs: VERSION
           tags: "latest,${{ env.VERSION }}"
