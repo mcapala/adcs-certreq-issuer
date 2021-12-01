@@ -1,8 +1,5 @@
 # Build the manager binary
-FROM golang:1.12.5 as builder
-
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get upgrade -y && apt clean
+FROM golang:1.17 as builder
 
 WORKDIR /workspace
 

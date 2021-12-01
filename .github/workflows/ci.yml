@@ -62,10 +62,12 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@master
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}
+          BUILT_BINARY: manager-${{ steps.get_version.outputs.VERSION }}-linux-amd64
         with:
           name: pearj/adcs-issuer
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          buildargs: VERSION
+          buildargs: VERSION,BUILD_BINARY
+          dockerfile: ci.Dockerfile
           tags: "latest,${{ env.VERSION }}"
