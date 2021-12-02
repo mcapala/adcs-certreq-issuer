@@ -4,11 +4,13 @@ go 1.16
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
+	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/go-logr/logr v0.4.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/jetstack/cert-manager v1.5.3
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/tools v0.1.5 // indirect
 	k8s.io/api v0.21.3
 	k8s.io/apimachinery v0.21.3
