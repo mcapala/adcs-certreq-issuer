@@ -18,8 +18,9 @@ ADCS Issuer has been tested with cert-manager v.0.11.0 and currently supports Ce
 ## Configuration and usage
 
 ### Issuers
-The ADCS service data can configured in `AdcsIssuer` or `ClusterAdcsIssuer` CRD objects e.g.:
+The ADCS service data can be configured in `AdcsIssuer` or `ClusterAdcsIssuer` CRD objects e.g.:
 ```
+apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: AdcsIssuer
 metadata:
   name: test-adcs
@@ -53,6 +54,7 @@ type: Opaque
 ```
 If cluster level issuer configuration is needed then ClusterAdcsUssuer can be defined like this:
 ```
+apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: ClusterAdcsIssuer
 metadata:
   name: test-adcs
@@ -125,6 +127,25 @@ status:
   state: ready
 ```
 
+#### Auto-request certificate from ingress
+Add the following to an `Ingress` for cert-manager to auto-generate a
+`Certificate` using `Ingress` information with ingress-shim
+```
+metadata:
+  name: test-ingress
+    annotations:
+        cert-manager.io/issuer: "adcs-issuer" #use specific name of issuer
+        cert-manager.io/issuer-kind: "AdcsIssuer" #or AdcsClusterIssuer
+        cert-manager.io/issuer-group: "adcs.certmanager.csf.nokia.com"
+```
+in addition to
+```
+spec:
+  tls:
+    - hosts:
+        - test-host.com
+            secretName: ingress-secret # secret cert-manager stores certificate in
+```
 
 ## Installation
 
@@ -133,6 +154,15 @@ Generated CRD manifests are stored in `config/crd`. RBAC roles and bindings can 
 store it in local docker repo (Docker must be installed).
 
 More specific install instructions can be found in `README-DEV.md`
+
+
+### Disable Approval Check
+
+The ADCS Issuer will wait for CertificateRequests to have an [approved condition
+set](https://cert-manager.io/docs/concepts/certificaterequest/#approval) before
+signing. If using an older version of cert-manager (pre v1.3), you can disable
+this check by supplying the command line flag `-enable-approved-check=false` to
+the Issuer Deployment.
 
 ## Testing considerations
 
@@ -171,7 +201,6 @@ More then one directive can be used at a time. e.g. to simulate rejecting the ce
 * Helm chart
 * ...
 
-
 ## Why interfacing with a GUI?
 
 Unfortunately, there are no web services available for ADCS management only a DCOM interface [MS-CSRA](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-csra/40e74714-14bf-4f97-a264-35efbd63a813).
@@ -179,3 +208,7 @@ Unfortunately, there are no web services available for ADCS management only a DC
 (there are SOAP-based web services for certificate enrollment: [MS-XCEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-xcep/08ec4475-32c2-457d-8c27-5a176660a210) 
 and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wstep/4766a85d-0d18-4fa1-a51f-e5cb98b752ea))
 
+
+## License
+
+This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).

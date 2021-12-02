@@ -31,9 +31,9 @@ spec:
         name: manager
         resources:
           limits:
-            cpu: 1000m
+            cpu: 100m
             memory: 500Mi
           requests:
             cpu: 100m
-            memory: 20Mi
+            memory: 100Mi
       terminationGracePeriodSeconds: 10

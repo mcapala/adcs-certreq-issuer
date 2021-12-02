@@ -11,6 +11,15 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Build ADCS simulator
+sim:
+	go build -o bin/adcs-sim test/adcs-sim/main.go
+
+sim-install: sim
+	cp bin/adcs-sim /usr/local/bin
+	mkdir -p /usr/local/adcs-sim
+	cp -R test/adcs-sim/ca test/adcs-sim/templates /usr/local/adcs-sim
+
 all: manager
 
 # Run tests
@@ -46,6 +55,12 @@ deploy:
 manifests: controller-gen
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
+# Generate template
+template: manifests
+	kustomize build config/crd > template.yaml
+	echo "---" >> template.yaml
+	kustomize build config/default >> template.yaml
+
 # Run go fmt against code
 fmt:
 	go fmt ./...
@@ -58,12 +73,8 @@ vet:
 generate: controller-gen
 	$(CONTROLLER_GEN) object:headerFile=./hack/boilerplate.go.txt paths="./..."
 
-# Login to registry
-docker-login: 
-	docker login 
-
 # Build the docker image
-docker-build: 
+docker-build: test
 	docker build . -t ${IMG}
 
 # Push the docker image
@@ -74,14 +85,7 @@ docker-push:
 # download controller-gen if necessary
 controller-gen:
 ifeq (, $(shell which controller-gen))
-	@{ \
-	set -e ;\
-	CONTROLLER_GEN_TMP_DIR=$$(mktemp -d) ;\
-	cd $$CONTROLLER_GEN_TMP_DIR ;\
-	go mod init tmp ;\
-	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.2.4 ;\
-	rm -rf $$CONTROLLER_GEN_TMP_DIR ;\
-	}
+	go get sigs.k8s.io/controller-tools/cmd/controller-gen@v0.6.0
 CONTROLLER_GEN=$(GOBIN)/controller-gen
 else
 CONTROLLER_GEN=$(shell which controller-gen)

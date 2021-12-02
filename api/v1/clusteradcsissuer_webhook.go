@@ -1,3 +1,18 @@
+/*
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package v1
 
 import (
@@ -18,21 +33,24 @@ import (
 	"github.com/jetstack/cert-manager/pkg/util/pki"
 )
 
-var log = logf.Log.WithName("adcsissuer-resource")
+// log is for logging in this package.
+var clusteradcsissuerlog = logf.Log.WithName("clusteradcsissuer-resource")
 
-func (r *AdcsIssuer) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *ClusterAdcsIssuer) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
 
-// +kubebuilder:webhook:path=/mutate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=true,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,verbs=create;update,versions=v1,name=adcsissuer-mutation.adcs.certmanager.csf.nokia.com,sideEffects=None,admissionReviewVersions=v1
+// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-var _ webhook.Defaulter = &AdcsIssuer{}
+// +kubebuilder:webhook:path=/mutate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=true,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,verbs=create;update,versions=v1,name=mclusteradcsissuer.kb.io,sideEffects=None,admissionReviewVersions=v1
+
+var _ webhook.Defaulter = &ClusterAdcsIssuer{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *AdcsIssuer) Default() {
-	log.Info("default", "name", r.Name)
+func (r *ClusterAdcsIssuer) Default() {
+	clusteradcsissuerlog.Info("default", "name", r.Name)
 
 	if r.Spec.StatusCheckInterval == "" {
 		r.Spec.StatusCheckInterval = "6h"
@@ -42,32 +60,33 @@ func (r *AdcsIssuer) Default() {
 	}
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-adcs-certmanager-csf-nokia-com-v1-adcsissuer,mutating=false,failurePolicy=fail,groups=adcs.certmanager.csf.nokia.com,resources=adcsissuer,versions=v1,name=adcsissuer-validation.adcs.certmanager.csf.nokia.com,sideEffects=None,admissionReviewVersions=v1
+// TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
+// +kubebuilder:webhook:verbs=create;update,path=/validate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer,mutating=false,failurePolicy=fail,groups=batch.certmanager.csf.nokia.com,resources=clusteradcsissuers,versions=v1,name=vclusteradcsissuer.kb.io,sideEffects=None,admissionReviewVersions=v1
 
-var _ webhook.Validator = &AdcsIssuer{}
+var _ webhook.Validator = &ClusterAdcsIssuer{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateCreate() error {
-	log.Info("validate create", "name", r.Name)
+func (r *ClusterAdcsIssuer) ValidateCreate() error {
+	clusteradcsissuerlog.Info("validate create", "name", r.Name)
 
-	return r.validateAdcsIssuer()
+	return r.validateClusterAdcsIssuer()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateUpdate(old runtime.Object) error {
-	log.Info("validate update", "name", r.Name)
+func (r *ClusterAdcsIssuer) ValidateUpdate(old runtime.Object) error {
+	clusteradcsissuerlog.Info("validate update", "name", r.Name)
 
-	return r.validateAdcsIssuer()
+	return r.validateClusterAdcsIssuer()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateDelete() error {
-	log.Info("validate delete", "name", r.Name)
+func (r *ClusterAdcsIssuer) ValidateDelete() error {
+	clusteradcsissuerlog.Info("validate delete", "name", r.Name)
 
-	return nil
+	return r.validateClusterAdcsIssuer()
 }
 
-func (r *AdcsIssuer) validateAdcsIssuer() error {
+func (r *ClusterAdcsIssuer) validateClusterAdcsIssuer() error {
 	var allErrs field.ErrorList
 
 	// Validate RetryInterval

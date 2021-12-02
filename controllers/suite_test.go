@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	adcsv1 "github.com/chojnack/adcs-issuer/api/v1"
+	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -49,7 +49,7 @@ func TestAPIs(t *testing.T) {
 }
 
 var _ = BeforeSuite(func(done Done) {
-	logf.SetLogger(zap.New(zap.UseDevMode(true)))
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter)))
 
 	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{

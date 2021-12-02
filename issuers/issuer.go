@@ -14,8 +14,8 @@ import (
 	"k8s.io/klog"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/chojnack/adcs-issuer/adcs"
-	api "github.com/chojnack/adcs-issuer/api/v1"
+	"github.com/nokia/adcs-issuer/adcs"
+	api "github.com/nokia/adcs-issuer/api/v1"
 	"github.com/fullsailor/pkcs7"
 )
 
