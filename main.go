@@ -70,6 +70,7 @@ func main() {
 		Scheme:             scheme,
 		MetricsBindAddress: metricsAddr,
 		LeaderElection:     enableLeaderElection,
+		LeaderElectionID:   "a53ajtxc.adcs-issuer.cert-manager",
 		Port:               9443,
 	})
 	if err != nil {
