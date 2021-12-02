@@ -22,7 +22,7 @@ import (
 	adcsv1 "github.com/chojnack/adcs-issuer/api/v1"
 	"github.com/chojnack/adcs-issuer/controllers"
 	"github.com/chojnack/adcs-issuer/issuers"
-	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"

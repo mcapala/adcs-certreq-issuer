@@ -22,7 +22,7 @@ Create a certificate using selfsigned issuer from cert-manager in order to get t
 cat <<EOF | kubectl -n adcs-issuer-system apply -f -
 
 ``` YAML
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: serving-cert
@@ -100,7 +100,7 @@ Apply a certificate resource, that will make a certificaterequest with the issue
 cat <<EOF | kubectl -n adcs-issuer-system apply -f -
 
 ``` YAML
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   annotations:

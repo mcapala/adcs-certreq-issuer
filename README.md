@@ -71,7 +71,7 @@ The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), m
 To request a certificate with `AdcsIssuer` the standard `certificate.cert-manager.io` object needs to be created. The `issuerRef` must be set to point to `AdcsIssuer` or `ClusterAdcsIssuer` object
 from group `adcs.certmanager.csf.nokie.com` e.g.:
 ```
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   annotations:
@@ -107,7 +107,7 @@ metadata:
   name: adcs-cert-3831834799
   namespace: c1
   ownerReferences:
-  - apiVersion: cert-manager.io/v1alpha2
+  - apiVersion: cert-manager.io/v1
     blockOwnerDeletion: true
     controller: true
     kind: CertificateRequest

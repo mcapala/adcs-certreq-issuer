@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	//cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	//cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	//cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog"

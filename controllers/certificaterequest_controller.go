@@ -25,7 +25,7 @@ import (
 
 	api "github.com/chojnack/adcs-issuer/api/v1"
 	cmapiutil "github.com/jetstack/cert-manager/pkg/api/util"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	core "k8s.io/api/core/v1"
 	apimacherrors "k8s.io/apimachinery/pkg/api/errors"
@@ -49,8 +49,7 @@ var (
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=patch
 
-func (r *CertificateRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
+func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("certificaterequest", req.NamespacedName)
 
 	// your logic here
@@ -118,7 +117,7 @@ func (r *CertificateRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 
 func (r *CertificateRequestReconciler) createAdcsRequest(ctx context.Context, cmRequest *cmapi.CertificateRequest) error {
 	spec := api.AdcsRequestSpec{
-		CSRPEM:    cmRequest.Spec.CSRPEM,
+		CSRPEM:    cmRequest.Spec.Request,
 		IssuerRef: cmRequest.Spec.IssuerRef,
 	}
 	return r.Create(ctx, &api.AdcsRequest{
@@ -139,7 +138,7 @@ func (r *CertificateRequestReconciler) SetupWithManager(mgr ctrl.Manager) error 
 
 func RequestDiffers(adcsReq *api.AdcsRequest, certReq *cmapi.CertificateRequest) bool {
 	a := adcsReq.Spec.CSRPEM
-	b := certReq.Spec.CSRPEM
+	b := certReq.Spec.Request
 	if len(a) != len(b) {
 		return true
 	}
