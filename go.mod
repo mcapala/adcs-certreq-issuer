@@ -3,20 +3,19 @@ module github.com/chojnack/adcs-issuer
 go 1.13
 
 require (
-	github.com/Azure/go-ntlmssp v0.0.0-20180810175552-4a21cbd618b4
+	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/go-logr/logr v0.1.0
 	github.com/jetstack/cert-manager v0.11.0
-	github.com/onsi/ginkgo v1.10.2
-	github.com/onsi/gomega v1.7.0
+	github.com/onsi/ginkgo v1.14.1
+	github.com/onsi/gomega v1.10.1
 	github.com/stretchr/testify v1.4.0
 	k8s.io/api v0.17.1
+	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apimachinery v0.17.1
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/klog v1.0.0
-	k8s.io/kubernetes v1.17.1 // indirect
 	sigs.k8s.io/controller-runtime v0.4.0
-	sigs.k8s.io/controller-tools v0.2.0 // indirect
 )
 
 replace k8s.io/api => k8s.io/api v0.17.1
