@@ -89,14 +89,20 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		r.setStatus(ctx, ar)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
-		cr.Status.Certificate = cert
+		// Combine the certificates, as we need the intermediate certs in with the CA.
+		combinedCert := cert
+		if caCert != nil {
+			combinedCert = append(cert, caCert...)
+		}
+		cr.Status.Certificate = combinedCert
 
 		if klog.V(5) {
 			s := string(cert)
 			klog.Infof("certificate obtained: \n %s ", s)
 		}
 
-		cr.Status.CA = caCert
+		// CA cert is inside the cert above
+		// cr.Status.CA = caCert
 		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successfull")
 	case api.Rejected:
 		// This is a little hack for strange cert-manager behavior in case of failed request. Cert-manager automatically
