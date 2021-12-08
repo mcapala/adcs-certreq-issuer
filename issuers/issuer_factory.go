@@ -80,12 +80,16 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		issuer.Spec.RetryInterval,
 		defaultRetryInterval,
 		log.WithValues("interval", "retryInterval"))
+	adcsTemplateName := f.AdcsTemplateName
+	if issuer.Spec.TemplateName != "" {
+		adcsTemplateName = issuer.Spec.TemplateName
+	}
 	return &Issuer{
 		f.Client,
 		certServ,
 		retryInterval,
 		statusCheckInterval,
-		f.AdcsTemplateName,
+		adcsTemplateName,
 	}, nil
 }
 
@@ -129,12 +133,16 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		issuer.Spec.RetryInterval,
 		defaultRetryInterval,
 		log.WithValues("interval", "retryInterval"))
+	adcsTemplateName := f.AdcsTemplateName
+	if issuer.Spec.TemplateName != "" {
+		adcsTemplateName = issuer.Spec.TemplateName
+	}
 	return &Issuer{
 		f.Client,
 		certServ,
 		retryInterval,
 		statusCheckInterval,
-		f.AdcsTemplateName,
+		adcsTemplateName,
 	}, nil
 }
 

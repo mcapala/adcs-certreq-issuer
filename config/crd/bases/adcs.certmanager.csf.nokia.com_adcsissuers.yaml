@@ -63,6 +63,9 @@ spec:
               url:
                 description: URL is the base URL for the ADCS instance
                 type: string
+              templateName:
+                description: Which ADCS Template should this issuer use
+                type: string
             required:
             - credentialsRef
             - url

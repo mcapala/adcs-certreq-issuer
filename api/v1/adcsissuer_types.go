@@ -49,6 +49,11 @@ type AdcsIssuerSpec struct {
 	// Default 1 hour.
 	// +optional
 	RetryInterval string `json:"retryInterval,omitempty"`
+
+	// Which ADCS Template should this issuer use
+	// Defaults to the what is specified in main.go or as an cli option.
+	// +optional
+	TemplateName string `json:"templateName,omitempty"`
 }
 
 // AdcsIssuerStatus defines the observed state of AdcsIssuer
