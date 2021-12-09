@@ -28,7 +28,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
-	"k8s.io/klog"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -52,11 +51,6 @@ func init() {
 }
 
 func main() {
-	// prevent logging into file by glog
-	flag.Set("logtostderr", "true")
-	// prevent logging into file by klog
-	klog.SetOutput(os.Stdout)
-
 	var metricsAddr string
 	var healthcheckAddr string
 	var webhooksPort string
@@ -106,7 +100,6 @@ func main() {
 	mgr.AddReadyzCheck("readyz", healthcheck.HealthCheck)
 	certificateRequestReconciler := &controllers.CertificateRequestReconciler{
 		Client:   mgr.GetClient(),
-		Log:      ctrl.Log.WithName("controllers").WithName("CertificateRequest"),
 		Recorder: mgr.GetEventRecorderFor("adcs-certificaterequests-controller"),
 
 		Clock:                  clock.RealClock{},
@@ -122,7 +115,6 @@ func main() {
 		Log:    ctrl.Log.WithName("controllers").WithName("AdcsRequest"),
 		IssuerFactory: issuers.IssuerFactory{
 			Client:                   mgr.GetClient(),
-			Log:                      ctrl.Log.WithName("factories").WithName("AdcsIssuer"),
 			ClusterResourceNamespace: clusterResourceNamespace,
 			AdcsTemplateName:         adcsTemplateName,
 		},

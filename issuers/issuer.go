@@ -11,12 +11,14 @@ import (
 	//cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	//cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/fullsailor/pkcs7"
+	"github.com/go-logr/logr"
 	"github.com/nokia/adcs-issuer/adcs"
 	api "github.com/nokia/adcs-issuer/api/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 type Issuer struct {
@@ -32,6 +34,7 @@ type Issuer struct {
 // The current status is set in the passed request.
 // If status is 'Ready' the returns include certificate and CA cert respectively.
 func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte, error) {
+	log := ctrl.LoggerFrom(ctx)
 	var adcsResponseStatus adcs.AdcsResponseStatus
 	var desc string
 	var id string
@@ -53,8 +56,8 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 		// New request
 		adcsResponseStatus, desc, id, err = i.certServ.RequestCertificate(string(ar.Spec.CSRPEM), i.AdcsTemplateName)
 
-		if klog.V(5) {
-			klog.Infof("new adcsRequest: adcsResponseStatus: %v, \n desc: %v id: %v \n", adcsResponseStatus, desc, id)
+		if log.V(5).Enabled() {
+			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id)
 		}
 	}
 	if err != nil {
@@ -94,18 +97,18 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 	}
 
 	// Parse and encode the certificateChain to a valid x509 certificate.
-	ca, err := parseCaCert([]byte(certChain))
+	ca, err := parseCaCert([]byte(certChain), log)
 	if err != nil {
-		klog.Error("something went wrong parsing to x509")
+		log.Error(err, "something went wrong parsing to x509")
 		return nil, nil, err
 	}
 
-	if klog.V(4) {
+	if log.V(4).Enabled() {
 		s := string(cert)
-		klog.Infof("parsed CaCert: \n %v", s)
+		log.V(4).Info("parsed certificate", "certificate", s)
 	}
 
-	// klog.V(4).Infof("will return cert: %v", cert)
+	// log.V(4).Info("will return cert", "cert", cert)
 
 	return cert, ca, nil
 
@@ -115,14 +118,14 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 // type x509Bytes []byte
 
 // ParseCaCert accepts bytes representing a certificate and returns x509 certificate encoded pem
-func parseCaCert(cc []byte) ([]byte, error) {
+func parseCaCert(cc []byte, log logr.Logger) ([]byte, error) {
 
 	// decode Pem from certificate into block
 	block, rest := pem.Decode([]byte(cc))
 	if block == nil {
-		if klog.V(3) {
+		if log.V(3).Enabled() {
 			s := string(rest)
-			klog.Infof("tried to decode pem:  %v", s)
+			log.Info("tried to decode pem", "rest", s)
 		}
 		return nil, errors.New("error decoding the pem block")
 	}

@@ -1,11 +1,12 @@
 package healthcheck
 
 import (
-	"github.com/golang/glog"
 	"net/http"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 func HealthCheck(r *http.Request) error {
-	glog.V(1).Info("Healthcheck passed")
+	log.Log.WithName("healthcheck").V(1).Info("Healthcheck passed")
 	return nil
 }

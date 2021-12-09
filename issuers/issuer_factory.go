@@ -15,6 +15,7 @@ import (
 
 	"github.com/nokia/adcs-issuer/adcs"
 	api "github.com/nokia/adcs-issuer/api/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -24,7 +25,6 @@ const (
 
 type IssuerFactory struct {
 	client.Client
-	Log                      logr.Logger
 	ClusterResourceNamespace string
 	AdcsTemplateName         string
 }
@@ -43,7 +43,8 @@ func (f *IssuerFactory) GetIssuer(ctx context.Context, ref cmmeta.ObjectReferenc
 
 // Get AdcsIssuer object from K8s and create Issuer
 func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey) (*Issuer, error) {
-	log := f.Log.WithValues("AdcsIssuer", key)
+
+	log := ctrl.LoggerFrom(ctx, "AdcsIssuer", key)
 
 	issuer := new(api.AdcsIssuer)
 	if err := f.Client.Get(ctx, key, issuer); err != nil {
@@ -95,7 +96,7 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 
 // Get ClusterAdcsIssuer object from K8s and create Issuer
 func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.ObjectKey) (*Issuer, error) {
-	log := f.Log.WithValues("ClusterAdcsIssuer", key)
+	log := ctrl.LoggerFrom(ctx, "ClusterAdcsIssuer", key)
 	key.Namespace = ""
 
 	issuer := new(api.ClusterAdcsIssuer)

@@ -19,7 +19,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
 	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -32,13 +31,11 @@ import (
 	apimacherrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/klog"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
 type CertificateRequestReconciler struct {
 	client.Client
-	Log      logr.Logger
 	Recorder record.EventRecorder
 
 	Clock                  clock.Clock
@@ -54,7 +51,7 @@ var (
 // +kubebuilder:rbac:groups="",resources=events,verbs=patch;create
 
 func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("certificaterequest", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx, "certificaterequest", req.NamespacedName)
 
 	// your logic here
 
@@ -71,7 +68,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// Check the CertificateRequest's issuerRef and if it does not match the api
 	// group name, log a message at a debug level and stop processing.
 	if cr.Spec.IssuerRef.Group != api.GroupVersion.Group {
-		klog.V(4).Info("resource does not specify an issuerRef group name that we are responsible for", "group", cr.Spec.IssuerRef.Group)
+		log.V(4).Info("resource does not specify an issuerRef group name that we are responsible for", "group", cr.Spec.IssuerRef.Group)
 		return ctrl.Result{}, nil
 	}
 
@@ -127,7 +124,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 	// If the certificate data is already set then we skip this request as it
 	// has already been completed in the past.
 	if len(cr.Status.Certificate) > 0 {
-		klog.V(4).Info("existing certificate data found in status, skipping already completed CertificateRequest")
+		log.V(4).Info("existing certificate data found in status, skipping already completed CertificateRequest")
 		return ctrl.Result{}, nil
 	}
 
@@ -164,7 +161,7 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 		return ctrl.Result{}, err
 	}
 	r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "Processing ADCS request")
-	klog.V(4).Infof("setstatus: ctx=%v, cr=%v", ctx, &cr)
+	log.V(4).Info("setstatus", "ctx", ctx, "cr", &cr)
 	return ctrl.Result{}, nil
 }
 

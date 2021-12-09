@@ -21,7 +21,6 @@ import (
 
 	"github.com/go-logr/logr"
 	core "k8s.io/api/core/v1"
-	"k8s.io/klog"
 
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -47,12 +46,13 @@ type AdcsRequestReconciler struct {
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests/status,verbs=get;update;patch
 
 func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("adcsrequest", req.NamespacedName)
+	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
 
 	// your logic here
 	log.Info("Processing request")
-	if klog.V(3) {
-		klog.Infof("requesting to template: %v", r.IssuerFactory.AdcsTemplateName)
+
+	if log.V(3).Enabled() {
+		log.V(3).Info("Running request", "template", r.IssuerFactory.AdcsTemplateName)
 	}
 
 	// Fetch the AdcsRequest resource being reconciled
@@ -76,7 +76,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// This is a local error.
 		// We don't change the request status and just put it back on the queue
 		// to re-try later.
-		log.Error(err, fmt.Sprintf("Failed request will be re-tried in %v", issuer.RetryInterval))
+		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
 	}
 
@@ -96,14 +96,14 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 		cr.Status.Certificate = combinedCert
 
-		if klog.V(5) {
+		if log.V(5).Enabled() {
 			s := string(cert)
-			klog.Infof("certificate obtained: \n %s ", s)
+			log.V(5).Info("certificate obtained", "certificate", s)
 		}
 
 		// CA cert is inside the cert above
 		// cr.Status.CA = caCert
-		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successfull")
+		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
 	case api.Rejected:
 		// This is a little hack for strange cert-manager behavior in case of failed request. Cert-manager automatically
 		// re-tries such requests (re-created CertificateRequest object) what doesn't make sense in case of rejection.
