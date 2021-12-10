@@ -51,10 +51,6 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	// your logic here
 	log.Info("Processing request")
 
-	if log.V(3).Enabled() {
-		log.V(3).Info("Running request", "template", r.IssuerFactory.AdcsTemplateName)
-	}
-
 	// Fetch the AdcsRequest resource being reconciled
 	ar := new(api.AdcsRequest)
 	if err := r.Client.Get(ctx, req.NamespacedName, ar); err != nil {
@@ -69,6 +65,10 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	if err != nil {
 		log.WithValues("issuer", ar.Spec.IssuerRef).Error(err, "Couldn't get issuer")
 		return ctrl.Result{}, err
+	}
+
+	if log.V(3).Enabled() {
+		log.V(3).Info("Running request", "template", issuer.AdcsTemplateName)
 	}
 
 	cert, caCert, err := issuer.Issue(ctx, ar)

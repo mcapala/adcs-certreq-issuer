@@ -31,7 +31,7 @@ jobs:
         run: |
           export GOBIN=$(pwd)/bin
           export PATH=$PATH:$GOBIN
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o manager-$VERSION-linux-amd64 main.go
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -ldflags="-X 'main.version=$(git describe --tags)' -X 'main.buildTime=$(date)'" -a -o manager-$VERSION-linux-amd64 main.go
           echo manager-$VERSION
         env:
           VERSION: ${{ steps.get_version.outputs.VERSION }}

@@ -190,6 +190,8 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
 	var certStatus AdcsResponseStatus = Unknown
 
+	log.V(1).Info("Starting certificate request")
+
 	url := fmt.Sprintf("%s/%s", s.url, certfnsh)
 	params := neturl.Values{
 		"Mode":                {"newreq"},
@@ -209,7 +211,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	req.Header.Set("User-agent", "Mozilla")
 	req.Header.Set("Content-type", ct_urlenc)
 
-	log.V(1).Info("Sending request", "request", req)
+	log.V(2).Info("Sending request", "request", req)
 
 	res, err := s.httpClient.Do(req)
 	if err != nil {
@@ -228,7 +230,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	bodyString := string(body)
 
-	log.V(1).Info("Body", "body", bodyString)
+	log.V(2).Info("Body", "body", bodyString)
 
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
 	found := exp.FindStringSubmatch(bodyString)
