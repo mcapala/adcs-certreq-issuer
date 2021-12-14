@@ -32,6 +32,7 @@ spec:
   statusCheckInterval: 6h
   retryInterval: 1h
   url: <adcs-certice-url>
+  templateName: <adcs-template-name>
 ```
 
 The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
@@ -65,6 +66,7 @@ spec:
   statusCheckInterval: 6h
   retryInterval: 1h
   url: <adcs-certice-url>
+  templateName: <adcs-template-name>
 ```
 The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
 
