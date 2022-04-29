@@ -10,6 +10,7 @@ require (
 	github.com/onsi/ginkgo v1.16.4
 	github.com/onsi/gomega v1.14.0
 	github.com/stretchr/testify v1.7.0
+	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	k8s.io/api v0.21.3
 	k8s.io/apimachinery v0.21.3

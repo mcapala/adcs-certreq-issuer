@@ -6,7 +6,7 @@
 *.so
 *.dylib
 bin
-
+adcs-issuer
 # Test binary, build with `go test -c`
 *.test
 
