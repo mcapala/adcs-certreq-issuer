@@ -2,10 +2,18 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: adcsissuers.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: webhook-service
+        namespace: system
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: AdcsIssuer
@@ -58,6 +66,10 @@ spec:
                 description: How often to check for request status in the server (in
                   time.ParseDuration() format) Default 6 hours.
                 type: string
+              templateName:
+                description: Which ADCS Template should this issuer use Defaults to
+                  the what is specified in main.go or as an cli option.
+                type: string
               url:
                 description: URL is the base URL for the ADCS instance
                 type: string
@@ -84,10 +96,18 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: adcsrequests.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: webhook-service
+        namespace: system
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: AdcsRequest
@@ -188,10 +208,18 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: clusteradcsissuers.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: webhook-service
+        namespace: system
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: ClusterAdcsIssuer
@@ -243,6 +271,10 @@ spec:
               statusCheckInterval:
                 description: How often to check for request status in the server (in
                   time.ParseDuration() format) Default 6 hours.
+                type: string
+              templateName:
+                description: Which ADCS Template should this issuer use Defaults to
+                  the what is specified in main.go or as an cli option.
                 type: string
               url:
                 description: URL is the base URL for the ADCS instance
@@ -271,16 +303,24 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
-  name: adcs-issuer-system
+  name: cert-manager
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: adcsissuers.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: adcs-issuer-webhook-service
+        namespace: cert-manager
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: AdcsIssuer
@@ -333,6 +373,10 @@ spec:
                 description: How often to check for request status in the server (in
                   time.ParseDuration() format) Default 6 hours.
                 type: string
+              templateName:
+                description: Which ADCS Template should this issuer use Defaults to
+                  the what is specified in main.go or as an cli option.
+                type: string
               url:
                 description: URL is the base URL for the ADCS instance
                 type: string
@@ -359,10 +403,18 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: adcsrequests.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: adcs-issuer-webhook-service
+        namespace: cert-manager
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: AdcsRequest
@@ -463,10 +515,18 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
+    controller-gen.kubebuilder.io/version: v0.8.0
   name: clusteradcsissuers.adcs.certmanager.csf.nokia.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhookClientConfig:
+      caBundle: Cg==
+      service:
+        name: adcs-issuer-webhook-service
+        namespace: cert-manager
+        path: /convert
   group: adcs.certmanager.csf.nokia.com
   names:
     kind: ClusterAdcsIssuer
@@ -519,6 +579,10 @@ spec:
                 description: How often to check for request status in the server (in
                   time.ParseDuration() format) Default 6 hours.
                 type: string
+              templateName:
+                description: Which ADCS Template should this issuer use Defaults to
+                  the what is specified in main.go or as an cli option.
+                type: string
               url:
                 description: URL is the base URL for the ADCS instance
                 type: string
@@ -545,7 +609,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: adcs-issuer-leader-election-role
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 rules:
 - apiGroups:
   - ""
@@ -721,7 +785,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: adcs-issuer-leader-election-rolebinding
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -729,7 +793,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -755,7 +819,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -768,7 +832,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: default
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 ---
 apiVersion: v1
 kind: Service
@@ -780,7 +844,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: adcs-issuer-controller-manager-metrics-service
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 spec:
   ports:
   - name: https
@@ -793,7 +857,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: adcs-issuer-webhook-service
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 spec:
   ports:
   - port: 443
@@ -807,7 +871,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: adcs-issuer-controller-manager
-  namespace: adcs-issuer-system
+  namespace: cert-manager
 spec:
   replicas: 1
   selector:
@@ -820,11 +884,13 @@ spec:
     spec:
       containers:
       - args:
-        - --metrics-addr=127.0.0.1:8080
-        - --enable-leader-election
+        - --metrics-bind-address=127.0.0.1:8080
+        - --health-probe-bind-address=:8081
+        - --leader-elect
+        - --cluster-resource-namespace=adcs-issuer-system
         command:
         - /manager
-        image: ctrought/adcs-issuer:0.3
+        image: controller:latest
         name: manager
         ports:
         - containerPort: 9443
@@ -858,10 +924,25 @@ spec:
           defaultMode: 420
           secretName: webhook-server-cert
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: adcs-issuer-serving-cert
+  namespace: cert-manager
+spec:
+  commonName: adcs-issuer-webhook-service.cert-manager.svc
+  dnsNames:
+  - adcs-issuer-webhook-service.cert-manager.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: selfsigned
+  secretName: webhook-server-cert
+---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
+  annotations:
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
   name: adcs-issuer-mutating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -869,7 +950,7 @@ webhooks:
   clientConfig:
     service:
       name: adcs-issuer-webhook-service
-      namespace: adcs-issuer-system
+      namespace: cert-manager
       path: /mutate-adcs-certmanager-csf-nokia-com-v1-adcsissuer
   failurePolicy: Fail
   name: adcsissuer-mutation.adcs.certmanager.csf.nokia.com
@@ -889,7 +970,7 @@ webhooks:
   clientConfig:
     service:
       name: adcs-issuer-webhook-service
-      namespace: adcs-issuer-system
+      namespace: cert-manager
       path: /mutate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer
   failurePolicy: Fail
   name: mclusteradcsissuer.kb.io
@@ -908,7 +989,8 @@ webhooks:
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
-  creationTimestamp: null
+  annotations:
+    cert-manager.io/inject-ca-from: $(CERTIFICATE_NAMESPACE)/$(CERTIFICATE_NAME)
   name: adcs-issuer-validating-webhook-configuration
 webhooks:
 - admissionReviewVersions:
@@ -916,7 +998,7 @@ webhooks:
   clientConfig:
     service:
       name: adcs-issuer-webhook-service
-      namespace: adcs-issuer-system
+      namespace: cert-manager
       path: /validate-adcs-certmanager-csf-nokia-com-v1-adcsissuer
   failurePolicy: Fail
   name: adcsissuer-validation.adcs.certmanager.csf.nokia.com
@@ -936,7 +1018,7 @@ webhooks:
   clientConfig:
     service:
       name: adcs-issuer-webhook-service
-      namespace: adcs-issuer-system
+      namespace: cert-manager
       path: /validate-batch-certmanager-csf-nokia-com-v1-clusteradcsissuer
   failurePolicy: Fail
   name: vclusteradcsissuer.kb.io

@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: controller-manager
-  namespace: system
+  namespace: cert-manager
 spec:
   template:
     spec:
@@ -22,5 +22,6 @@ spec:
       - name: manager
         args:
         - "--metrics-addr=127.0.0.1:8080"
+        - "--healthcheck-addr=:8081"
         - "--enable-leader-election"
-        - "--cluster-resource-namespace=adcs-issuer-system"
+        - "--cluster-resource-namespace=cert-manager"

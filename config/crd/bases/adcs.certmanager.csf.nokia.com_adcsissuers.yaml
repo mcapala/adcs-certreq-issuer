@@ -1,10 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.6.0
+    controller-gen.kubebuilder.io/version: v0.8.0
   creationTimestamp: null
   name: adcsissuers.adcs.certmanager.csf.nokia.com
 spec:
@@ -60,11 +59,12 @@ spec:
                 description: How often to check for request status in the server (in
                   time.ParseDuration() format) Default 6 hours.
                 type: string
+              templateName:
+                description: Which ADCS Template should this issuer use Defaults to
+                  the what is specified in main.go or as an cli option.
+                type: string
               url:
                 description: URL is the base URL for the ADCS instance
-                type: string
-              templateName:
-                description: Which ADCS Template should this issuer use
                 type: string
             required:
             - credentialsRef

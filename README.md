@@ -211,6 +211,20 @@ Unfortunately, there are no web services available for ADCS management only a DC
 and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wstep/4766a85d-0d18-4fa1-a51f-e5cb98b752ea))
 
 
+Installing cert manager 
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.0/cert-manager.yaml
+
+
+kustomize build config/crd > template.yaml
+echo "---" >> template.yaml
+kustomize build config/default >> template.yaml
+
+make dry-run 
+
+cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p manifests
+
+kubectl apply -R -f manifests -n cert-manager
+
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).

@@ -2,6 +2,7 @@ apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: AdcsRequest
 metadata:
   name: adcsrequest-sample
+  namespace: cert-manager
 spec:
   # Add fields here
   foo: bar
