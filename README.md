@@ -225,6 +225,9 @@ cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p man
 
 kubectl apply -R -f manifests -n cert-manager
 
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
+
+
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).
