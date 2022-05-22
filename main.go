@@ -41,7 +41,7 @@ const (
 var (
 	scheme    = runtime.NewScheme()
 	setupLog  = ctrl.Log.WithName("setup")
-	version   = "development-djkormo"
+	version   = "adcs-developement-djkormo"
 	buildTime = "unknown"
 )
 

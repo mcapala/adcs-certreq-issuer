@@ -10,10 +10,15 @@ This implementation is simply a HTTP client that interacts with the ADCS server 
 It supports NTLM authentication.
 
 
+[![Code scanning - action](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg?branch=dev)](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml)
+
+
+[![operator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml)
+
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v.0.11.0 and currently supports CertificateRequest CRD API version v1alpha2 only.
+ADCS Issuer has been tested with cert-manager v1.7.0 and currently supports CertificateRequest CRD API version v1 only.
 
 ## Configuration and usage
 
