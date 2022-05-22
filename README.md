@@ -10,7 +10,6 @@ This implementation is simply a HTTP client that interacts with the ADCS server 
 It supports NTLM authentication.
 
 
-[![Code scanning - action](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg?branch=dev)](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml)
 
 
 [![operator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml)
