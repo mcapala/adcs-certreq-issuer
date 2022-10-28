@@ -72,7 +72,7 @@ func main() {
 		setupLog.Error(err, "invalid webhooks port. Using default.")
 		port = defaultWebhooksPort
 	}
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&clusterResourceNamespace, "cluster-resource-namespace", "kube-system", "Namespace where cluster-level resources are stored.")
 	flag.StringVar(&adcsTemplateName, "adcsTemplateName", "BasicSSLWebServer", "Name of ADCS Template.")
@@ -136,10 +136,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AdcsIssuer")
 		os.Exit(1)
 	}
-
-	if err = (&adcsv1.AdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "AdcsIssuer")
-		os.Exit(1)
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&adcsv1.AdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "AdcsIssuer")
+			os.Exit(1)
+		}
 	}
 
 	if err = (&controllers.ClusterAdcsIssuerReconciler{
@@ -149,10 +150,11 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterAdcsIssuer")
 		os.Exit(1)
 	}
-
-	if err = (&adcsv1.ClusterAdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "ClusterAdcsIssuer")
-		os.Exit(1)
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		if err = (&adcsv1.ClusterAdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "ClusterAdcsIssuer")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 
