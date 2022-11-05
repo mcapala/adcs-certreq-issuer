@@ -19,12 +19,16 @@ import (
 	"flag"
 	"os"
 	"strconv"
+	"time"
 
 	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
 	"github.com/nokia/adcs-issuer/controllers"
 	"github.com/nokia/adcs-issuer/healthcheck"
 	"github.com/nokia/adcs-issuer/issuers"
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -33,7 +37,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
-
 
 const (
 	defaultWebhooksPort int = 9443
@@ -79,10 +82,27 @@ func main() {
 	flag.StringVar(&adcsTemplateName, "adcsTemplateName", "BasicSSLWebServer", "Name of ADCS Template.")
 
 	// Options for configuring logging
-	opts := zap.Options{}
+	opts := zap.Options{
+		Development: false, //was true
+	}
 	opts.BindFlags(flag.CommandLine)
 
 	flag.Parse()
+
+	// based on https://sdk.operatorframework.io/docs/building-operators/golang/references/logging/
+
+	configLog := uzap.NewProductionEncoderConfig()
+	// changing  time format to RFC3339Nano -> 2006-01-02T15:04:05.999999999Z07:00"
+	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
+	}
+	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+
+	//ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	// Construct a new logr.logger.
+	logger := zap.New(zap.UseDevMode(false), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder))
+	ctrl.SetLogger(logger)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
