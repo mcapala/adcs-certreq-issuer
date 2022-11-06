@@ -80,6 +80,9 @@ rm -fr operator-sdk
 alias k='kubectl'
 alias kubectx='kubectl config use-context '
 alias kubens='kubectl config set-context --current --namespace '
+alias kubegc='kubectl config  get-contexts'
+alias kge='kubectl get events --sort-by=.metadata.creationTimestamp'
+
 
 
 # krew plugins 
