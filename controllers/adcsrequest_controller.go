@@ -58,8 +58,13 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		// case for deleted object.
 		//
 		// The Manager will log other errors.
+
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+
 	}
+
+	log.V(3).Info("Running request", "Processing request", req.Name)
+
 	// Find the issuer
 	issuer, err := r.IssuerFactory.GetIssuer(ctx, ar.Spec.IssuerRef, ar.Namespace)
 	if err != nil {

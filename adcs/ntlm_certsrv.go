@@ -46,6 +46,8 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 		},
 	}
 
+	log.Info("NTLM verification start", "username", username, "url", url)
+	log.Info("NTLM verification start", "password", password, "url", url)
 	if username != "" && password != "" {
 		// Set up NTLM authentication
 		client = &http.Client{
@@ -74,6 +76,9 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 			return nil, err
 		}
 	}
+
+	log.Info("NTLM verification stop", "username", username, "url", url)
+
 	return c, nil
 }
 
