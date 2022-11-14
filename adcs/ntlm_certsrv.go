@@ -59,7 +59,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 			Transport: transport,
 		}
 		log.Info("Not using NTLM")
-		log.V(2).Info("Not using NTL")
+		log.V(5).Info("Not using NTL")
 	}
 
 	c := &NtlmCertsrv{
@@ -81,7 +81,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 	log := log.Log.WithName("verifyNtlm")
 	log.Info("NTLM verification", "username", s.username, "url", s.url)
-	log.V(2).Info("NTLM verification", "username", s.username, "url", s.url)
+	log.V(5).Info("NTLM verification", "username", s.username, "url", s.url)
 
 	req, _ := http.NewRequest("GET", s.url, nil)
 	req.SetBasicAuth(s.username, s.password)
@@ -91,7 +91,7 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 		return false, err
 	}
 	log.Info("NTLM verification successful", "status", res.Status)
-	log.V(2).Info("NTLM verification successful", "status", res.Status)
+	log.V(5).Info("NTLM verification successful", "status", res.Status)
 	return true, nil
 }
 
@@ -107,6 +107,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 	var certStatus AdcsResponseStatus = Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
+	log.V(5).Info("Making url request", "url", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
@@ -162,7 +163,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 				lastStatusMessage = " " + found[1]
 			} else {
 				log.Info("Last status unknown.")
-				log.V(2).Info("Last status unknown.")
+				log.V(5).Info("Last status unknown.")
 			}
 			return certStatus, dispositionMessage + lastStatusMessage, id, err
 
@@ -175,7 +176,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 			}
 			return Ready, string(cert), id, nil
 		default:
-			err = fmt.Errorf("Unexpected content type %s:", ct)
+			err = fmt.Errorf("unexpected content type %s:", ct)
 			log.Error(err, "Unexpected content type")
 			return certStatus, "", id, err
 		}
@@ -198,6 +199,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log.V(1).Info("Starting certificate request")
 
 	url := fmt.Sprintf("%s/%s", s.url, certfnsh)
+	log.V(5).Info("Starting certificate request", "url", url)
 	params := neturl.Values{
 		"Mode":                {"newreq"},
 		"CertRequest":         {csr},
