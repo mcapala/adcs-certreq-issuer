@@ -112,11 +112,12 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 	var certStatus AdcsResponseStatus = Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
-	log.V(5).Info("Making url request", "url", url)
+	log.Info("Making url request", "url", url)
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 	res, err := s.httpClient.Do(req)
+	log.Info("Making url request", "res", res)
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", id, err
@@ -216,7 +217,6 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
 
-
 	if err != nil {
 		log.Error(err, "Cannot create request")
 		return certStatus, "", "", err
@@ -228,13 +228,15 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log.Info("Sending request", "request", req)
 
 	res, err := s.httpClient.Do(req)
+
 	log.Info("Sending request", "response", res)
+	log.Info("Sending request", "response", res)
+	log.Info("Sending request", "response", res)
+
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", "", err
 	}
-
-	
 
 	body, err := ioutil.ReadAll(res.Body)
 
