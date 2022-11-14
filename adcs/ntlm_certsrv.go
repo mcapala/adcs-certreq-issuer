@@ -282,7 +282,13 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
+
+	log.Info("obtainCaCertificate start", "req", req, "url", url)
+	log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
+
 	res1, err := s.httpClient.Do(req)
+	log.Info("obtainCaCertificate start", "res1", res1)
+
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return "", err
