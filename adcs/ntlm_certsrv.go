@@ -215,7 +215,8 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		"SaveCert":            {"yes"},
 		"CertificateTemplate": {template},
 	}
-	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
+	//req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
+	req, err := http.NewRequest("GET", url, bytes.NewBufferString(params.Encode()))
 
 	if err != nil {
 		log.Error(err, "Cannot create request")
@@ -233,7 +234,6 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log.Info("Sending request", "response Header", res.Header)
 	log.Info("Sending request", "response Request.URL", res.Request.URL)
 	log.Info("Sending request", "Status Request.URL", res.Status)
-	
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
