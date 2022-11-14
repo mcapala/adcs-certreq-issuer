@@ -204,7 +204,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log.V(1).Info("Starting certificate request")
 
 	url := fmt.Sprintf("%s/%s", s.url, certfnsh)
-	log.V(5).Info("Starting certificate request", "url", url)
+	log.Info("Starting certificate request", "url", url)
 	params := neturl.Values{
 		"Mode":                {"newreq"},
 		"CertRequest":         {csr},
@@ -223,7 +223,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	req.Header.Set("User-agent", "Mozilla")
 	req.Header.Set("Content-type", ct_urlenc)
 
-	log.V(2).Info("Sending request", "request", req)
+	log.Info("Sending request", "request", req)
 
 	res, err := s.httpClient.Do(req)
 	if err != nil {
@@ -242,7 +242,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 
 	bodyString := string(body)
 
-	log.V(2).Info("Body", "body", bodyString)
+	log.Info("Body", "body", bodyString)
 
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
 	found := exp.FindStringSubmatch(bodyString)
@@ -266,6 +266,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 				errorContext = []interface{}{"body", bodyString}
 			}
 			err := errors.New(errorString)
+			// TODO
 			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
 			return certStatus, "", "", fmt.Errorf(errorString)
 		}
