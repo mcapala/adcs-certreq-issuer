@@ -230,8 +230,10 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	res, err := s.httpClient.Do(req)
 
 	log.Info("Sending request", "response", res)
-	log.Info("Sending request", "response", res)
-	log.Info("Sending request", "response", res)
+	log.Info("Sending request", "response Header", res.Header)
+	log.Info("Sending request", "response Request.URL", res.Request.URL)
+	log.Info("Sending request", "Status Request.URL", res.Status)
+	
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
