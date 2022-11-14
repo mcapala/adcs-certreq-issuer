@@ -174,6 +174,8 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 	}
 	if _, ok := secret.Data["password"]; !ok {
 		return "", "", fmt.Errorf("Password not set in secret")
+
 	}
+
 	return string(secret.Data["username"]), string(secret.Data["password"]), nil
 }

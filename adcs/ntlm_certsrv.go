@@ -59,6 +59,7 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 			Transport: transport,
 		}
 		log.Info("Not using NTLM")
+		log.V(2).Info("Not using NTL")
 	}
 
 	c := &NtlmCertsrv{
@@ -80,6 +81,8 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 	log := log.Log.WithName("verifyNtlm")
 	log.Info("NTLM verification", "username", s.username, "url", s.url)
+	log.V(2).Info("NTLM verification", "username", s.username, "url", s.url)
+
 	req, _ := http.NewRequest("GET", s.url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	res, err := s.httpClient.Do(req)
@@ -88,6 +91,7 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 		return false, err
 	}
 	log.Info("NTLM verification successful", "status", res.Status)
+	log.V(2).Info("NTLM verification successful", "status", res.Status)
 	return true, nil
 }
 
@@ -147,7 +151,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 					// Or at least the 'Disposition message' section
 					disp = found[0]
 				}
-				err = fmt.Errorf("Disposition message unknown: %s", disp)
+				err = fmt.Errorf("disposition message unknown: %s", disp)
 				log.Error(err, "Unknown error with ADCS")
 			}
 
@@ -158,6 +162,7 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 				lastStatusMessage = " " + found[1]
 			} else {
 				log.Info("Last status unknown.")
+				log.V(2).Info("Last status unknown.")
 			}
 			return certStatus, dispositionMessage + lastStatusMessage, id, err
 
