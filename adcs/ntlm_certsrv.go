@@ -215,6 +215,8 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		"CertificateTemplate": {template},
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
+
+
 	if err != nil {
 		log.Error(err, "Cannot create request")
 		return certStatus, "", "", err
@@ -226,11 +228,18 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	log.Info("Sending request", "request", req)
 
 	res, err := s.httpClient.Do(req)
+	log.Info("Sending request", "response", res)
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", "", err
 	}
+
+	
+
 	body, err := ioutil.ReadAll(res.Body)
+
+	log.Info("Body", "body", body)
+
 	if res.Header.Get("Content-type") == ct_pkix {
 		return Ready, string(body), "none", nil
 	}
