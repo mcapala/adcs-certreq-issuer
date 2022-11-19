@@ -9,8 +9,6 @@ GO_VERSION=1.17.8
 OPERATOR_SDK_VERSION=v1.19.x
 
 
-
-
 sudo apt-get update
 sudo apt-get install snap
 
@@ -19,8 +17,7 @@ sudo apt-get install snap
 
 sudo rm -rvf /usr/local/go/
 
-# install go GO_VERSION
-
+# install go  -> GO_VERSION
 
 VERSION=${GO_VERSION} # go version
 ARCH="amd64" # go architecture
@@ -64,7 +61,7 @@ cd ~
 curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
 sudo chmod +x kubebuilder && sudo mv kubebuilder /usr/local/bin/kubebuilder
 
-# Operator SDK
+# Operator SDK -> OPERATOR_SDK_VERSION
 
 git clone https://github.com/operator-framework/operator-sdk
 cd operator-sdk
@@ -114,10 +111,13 @@ kubebuilder version
 operator-sdk version
 helm version 
 
-minikube start -p aged --kubernetes-version=${KUBERNETES_VERSION}
+# Install kubernetes -> KUBERNETES_VERSION
+
+minikube start -p local --kubernetes-version=${KUBERNETES_VERSION}
 
 kubectl get nodes -o wide
 
+# Install VSC extentions 
 
 code --install-extension redhat.vscode-yaml --force
 code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
@@ -126,5 +126,9 @@ code --install-extension golang.Go --force
 code --install-extension 766b.go-outliner --force
 
 code --install-extension mhutchie.git-graph --force
+
+code --install-extension ms-azuretools.vscode-docker  --force
+
+code --install-extension ms-vscode.makefile-tools --force
 
 echo "done"

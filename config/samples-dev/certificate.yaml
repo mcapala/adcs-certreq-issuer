@@ -1,0 +1,12 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: serving-cert
+spec:
+  commonName: adcs-issuer-webhook-service.cert-manager.svc
+  dnsNames:
+  - adcs-issuer-webhook-service.cert-manager.svc.cluster.local
+  issuerRef:
+    kind: ClusterIssuer
+    name: selfsigned
+  secretName: webhook-server-cert
