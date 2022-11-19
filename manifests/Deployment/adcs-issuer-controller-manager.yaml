@@ -19,6 +19,8 @@ spec:
       - args:
         - --enable-leader-election=true
         - --cluster-resource-namespace=cert-manager
+        - --zap-log-level=5
+        - --disable-approved-check=false
         command:
         - /manager
         image: djkormo/adcs-issuer:dev

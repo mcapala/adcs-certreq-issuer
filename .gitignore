@@ -29,3 +29,7 @@ adcs-issuer
 examples/*
 issuers/testdata/pkcs7.pem
 issuers/testdata/x509.pem
+
+minikube_downloads/
+*.logs
+
