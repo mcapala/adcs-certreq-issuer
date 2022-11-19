@@ -234,6 +234,15 @@ kubectl apply -R -f manifests -n cert-manager
 kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
 
 
+make build IMG="docker.io/djkormo/adcs-issuer:dev"
+
+make docker-build docker-push IMG="docker.io/djkormo/adcs-issuer:dev"
+
+docker build . -t docker.io/djkormo/adcs-issuer:dev
+
+docker login docker.io/djkormo
+docker push docker.io/djkormo/adcs-issuer:dev
+
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).
