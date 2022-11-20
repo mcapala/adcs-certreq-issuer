@@ -32,4 +32,5 @@ issuers/testdata/x509.pem
 
 minikube_downloads/
 *.logs
+*.tar.gz
 

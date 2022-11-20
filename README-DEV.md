@@ -118,3 +118,25 @@ spec:
   - Your organization
   secretName: adcsIssuer-certificate
 ```
+
+
+In one terminal
+
+inside test/adcs-sim
+```
+go run main.go --dns=adcs1.example.com,adcs1.example.com --ips=10.10.10.1,10.10.10.2
+```
+
+
+openssl req -in test/adcs-sim/ca/server.csr -noout -text
+
+
+
+make run  ENABLE_WEBHOOKS=false ENABLE_DEBUG=true
+
+
+
+https://localhost:8443/certcarc.asp
+
+
+https://localhost:8443/certfnsh.asp

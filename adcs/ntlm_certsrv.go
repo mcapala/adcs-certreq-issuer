@@ -6,14 +6,14 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/Azure/go-ntlmssp"
 	"io/ioutil"
 	"net/http"
 	neturl "net/url"
+	"os"
 	"regexp"
-	"strings"
-
-	"github.com/Azure/go-ntlmssp"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"strings"
 )
 
 type NtlmCertsrv struct {
@@ -45,9 +45,9 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 			RootCAs:            caCertPool,
 		},
 	}
-
-	log.Info("NTLM verification start", "username", username, "url", url)
-	log.Info("NTLM verification start", "password", password, "url", url)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("NTLM verification start", "username", username, "password", password, "url", url)
+	}
 	if username != "" && password != "" {
 		// Set up NTLM authentication
 		client = &http.Client{
@@ -55,13 +55,18 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 				RoundTripper: transport,
 			},
 		}
+		if os.Getenv("ENABLE_DEBUG") == "true" {
+			log.Info("NTLM verification Using NTLM")
+		}
 	} else {
 		// Plain client with no NTLM
 		client = &http.Client{
 			Transport: transport,
 		}
-		log.Info("Not using NTLM")
-		log.V(5).Info("Not using NTL")
+		if os.Getenv("ENABLE_DEBUG") == "true" {
+			log.Info("NTLM verification not using NTLM")
+		}
+		log.V(5).Info("NTLM verification not using NTL")
 	}
 
 	c := &NtlmCertsrv{
@@ -76,16 +81,18 @@ func NewNtlmCertsrv(url string, username string, password string, caCertPool *x5
 			return nil, err
 		}
 	}
-
-	log.Info("NTLM verification stop", "username", username, "url", url)
-
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("NTLM verification stop", "username", username, "password", password, "url", url)
+	}
 	return c, nil
 }
 
 // Check if NTLM authentication is working for current credentials and URL
 func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 	log := log.Log.WithName("verifyNtlm")
-	log.Info("NTLM verification", "username", s.username, "url", s.url)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("NTLM verification", "username", s.username, "url", s.url)
+	}
 	log.V(5).Info("NTLM verification", "username", s.username, "url", s.url)
 
 	req, _ := http.NewRequest("GET", s.url, nil)
@@ -95,7 +102,9 @@ func (s *NtlmCertsrv) verifyNtlm() (bool, error) {
 		log.Error(err, "ADCS server error")
 		return false, err
 	}
-	log.Info("NTLM verification successful", "status", res.Status)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("NTLM verification successful", "status", res.Status)
+	}
 	log.V(5).Info("NTLM verification successful", "status", res.Status)
 	return true, nil
 }
@@ -112,12 +121,18 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 	var certStatus AdcsResponseStatus = Unknown
 
 	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
-	log.Info("Making url request", "url", url)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Making url request", "url", url)
+	}
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 	res, err := s.httpClient.Do(req)
-	log.Info("Making url request", "res", res)
+
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Making url request", "res", res)
+	}
+
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", id, err
@@ -215,8 +230,7 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		"SaveCert":            {"yes"},
 		"CertificateTemplate": {template},
 	}
-	//req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
-	req, err := http.NewRequest("GET", url, bytes.NewBufferString(params.Encode()))
+	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
 
 	if err != nil {
 		log.Error(err, "Cannot create request")
@@ -225,21 +239,25 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
 	req.Header.Set("Content-type", ct_urlenc)
-
-	log.Info("Sending request", "request", req)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Sending request", "request", req)
+	}
 
 	res, err := s.httpClient.Do(req)
-
-	log.Info("Sending request", "response", res)
-	log.Info("Sending request", "response Header", res.Header)
-	log.Info("Sending request", "response Request.URL", res.Request.URL)
-	log.Info("Sending request", "Status Request.URL", res.Status)
-
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Sending request", "error", err)
+		log.Info("Sending request", "response", res)
+		//log.Info("Sending request", "response Header", res.Header)
+		//log.Info("Sending request", "response Request.URL", res.Request.URL)
+		//log.Info("Sending request", "Status Request.URL", res.Status)
+	}
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")
 		return certStatus, "", "", err
 	}
-
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Sending request", "response", res)
+	}
 	body, err := ioutil.ReadAll(res.Body)
 
 	log.Info("Body", "body", body)
@@ -254,8 +272,9 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 	}
 
 	bodyString := string(body)
-
-	log.Info("Body", "body", bodyString)
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("Body", "body", bodyString)
+	}
 
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
 	found := exp.FindStringSubmatch(bodyString)
@@ -296,12 +315,15 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	req, _ := http.NewRequest("GET", url, nil)
 	req.SetBasicAuth(s.username, s.password)
 	req.Header.Set("User-agent", "Mozilla")
-
-	log.Info("obtainCaCertificate start", "req", req, "url", url)
-	log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
-
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("obtainCaCertificate start", "req", req, "url", url)
+		log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
+	}
 	res1, err := s.httpClient.Do(req)
-	log.Info("obtainCaCertificate start", "res1", res1)
+
+	if os.Getenv("ENABLE_DEBUG") == "true" {
+		log.Info("obtainCaCertificate start", "res1", res1)
+	}
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")

@@ -1,12 +1,15 @@
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
-  name: serving-cert
+  name: adcs-certificate
 spec:
-  commonName: adcs-issuer-webhook-service.cert-manager.svc
+  commonName: test.example.com
   dnsNames:
-  - adcs-issuer-webhook-service.cert-manager.svc.cluster.local
+  - test1-alternate.example.com
+  - test2-alternate.example.com
   issuerRef:
-    kind: ClusterIssuer
-    name: selfsigned
-  secretName: webhook-server-cert
+    group: adcs.certmanager.csf.nokia.com
+    kind: AdcsIssuer
+    name: test-adcs-issuer
+    
+  secretName: adcsIssuer-certificate
