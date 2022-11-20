@@ -134,9 +134,27 @@ openssl req -in test/adcs-sim/ca/server.csr -noout -text
 
 make run  ENABLE_WEBHOOKS=false ENABLE_DEBUG=true
 
-
-
 https://localhost:8443/certcarc.asp
 
-
 https://localhost:8443/certfnsh.asp
+
+
+
+
+username=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.username}' | base64 --decode)
+password=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.password}' | base64 --decode)
+url=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.url}')
+ca=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.caBundle}' | base64 --decode  )
+echo "username: ${username}"
+echo "password: ${password}"
+echo "url: ${url}"
+echo "ca: ${ca}"
+echo ${ca} > ca.crt
+curl   -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+curl  --cacert ./ca.crt  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+
+curl  -u '${username}:${password}' --ntlm '${url}/certsrv/certfnsh.asp' -vv
+
+curl -X POST -k -v -u "${username}:${password}" --ntlm "${url}/certcarc.asp" -vv
+
+curl -X POST  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv

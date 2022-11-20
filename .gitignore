@@ -33,4 +33,6 @@ issuers/testdata/x509.pem
 minikube_downloads/
 *.logs
 *.tar.gz
-
+adcs-sim
+*.crt
+*.key
