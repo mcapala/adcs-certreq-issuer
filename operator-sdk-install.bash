@@ -80,7 +80,14 @@ alias kubens='kubectl config set-context --current --namespace '
 alias kubegc='kubectl config  get-contexts'
 alias kge='kubectl get events --sort-by=.metadata.creationTimestamp'
 
+echo alias k=\'kubectl\' >> ~/.bashrc
+echo alias kubectx=\'kubectl config use-context \' >> ~/.bashrc
+echo alias kubens=\'kubectl config set-context --current --namespace \' >> ~/.bashrc
+echo alias kubegc=\'kubectl config  get-contexts\' >> ~/.bashrc
+echo alias kge=\'kubectl get events --sort-by=.metadata.creationTimestamp\' >> ~/.bashrc
 
+
+source ~/.bashrc
 
 # krew plugins 
 
@@ -98,10 +105,15 @@ alias kge='kubectl get events --sort-by=.metadata.creationTimestamp'
 
 export PATH="${KREW_ROOT:-$HOME/.krew}/bin:$PATH"
 
+echo export PATH=\"${KREW_ROOT:-$HOME/.krew}/bin:$PATH\" >> ~/.bashrc
+
 
 kubectl krew install split-yaml
 kubectl krew install neat
 kubectl krew install prune-unused
+kubectl krew install get-all
+
+#Kubectl plugin list   
 
 kubectl krew list 
 
