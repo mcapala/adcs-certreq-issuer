@@ -3,7 +3,7 @@ module github.com/nokia/adcs-issuer
 go 1.17
 
 require (
-	github.com/Azure/go-ntlmssp v0.0.0-20200615164410-66371956d46c
+	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/go-logr/logr v1.2.0
 	github.com/jetstack/cert-manager v1.7.1
