@@ -13,9 +13,13 @@ jobs:
       - name: Get the version from tag
         id: get_version
         run: echo ::set-env name=VERSION::${GITHUB_REF#refs/tags/}
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
       - name: Publish to Registry
         uses: elgohr/Publish-Docker-Github-Action@master
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
         with:
           name: siemp/adcs-controller
           username: ${{ secrets.DOCKER_USERNAME }}
