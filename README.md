@@ -243,6 +243,11 @@ docker build . -t docker.io/djkormo/adcs-issuer:dev
 docker login docker.io/djkormo
 docker push docker.io/djkormo/adcs-issuer:dev
 
+
+git tag 2.0.1 
+git push origin --tags
+
+
 ## License
 
 This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).
