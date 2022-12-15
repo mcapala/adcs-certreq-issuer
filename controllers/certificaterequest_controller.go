@@ -19,14 +19,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/go-logr/logr"
+	"k8s.io/utils/clock"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	api "github.com/chojnack/adcs-issuer/api/v1"
 	cmapiutil "github.com/jetstack/cert-manager/pkg/api/util"
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
+	api "github.com/nokia/adcs-issuer/api/v1"
 	core "k8s.io/api/core/v1"
 	apimacherrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -37,8 +37,10 @@ import (
 // AdcsRequestReconciler reconciles a AdcsRequest object
 type CertificateRequestReconciler struct {
 	client.Client
-	Log      logr.Logger
 	Recorder record.EventRecorder
+
+	Clock                  clock.Clock
+	CheckApprovedCondition bool
 }
 
 var (
@@ -46,12 +48,11 @@ var (
 )
 
 // +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests,verbs=get;list;watch;update;patch
-// +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=events,verbs=patch
+// +kubebuilder:rbac:groups=cert-manager.io,resources=certificaterequests/status;certificates/finalizers;certificaterequests/finalizers,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=events,verbs=patch;create
 
-func (r *CertificateRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-	log := r.Log.WithValues("certificaterequest", req.NamespacedName)
+func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx, "certificaterequest", req.NamespacedName)
 
 	// your logic here
 
@@ -70,6 +71,55 @@ func (r *CertificateRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 	if cr.Spec.IssuerRef.Group != api.GroupVersion.Group {
 		klog.V(4).Info("resource does not specify an issuerRef group name that we are responsible for", "group", cr.Spec.IssuerRef.Group)
 		return ctrl.Result{}, nil
+	}
+
+	// Ignore CertificateRequest if it is already Ready
+	if cmapiutil.CertificateRequestHasCondition(&cr, cmapi.CertificateRequestCondition{
+		Type:   cmapi.CertificateRequestConditionReady,
+		Status: cmmeta.ConditionTrue,
+	}) {
+		log.V(4).Info("CertificateRequest is Ready. Ignoring.")
+		return ctrl.Result{}, nil
+	}
+	// Ignore CertificateRequest if it is already Failed
+	if cmapiutil.CertificateRequestHasCondition(&cr, cmapi.CertificateRequestCondition{
+		Type:   cmapi.CertificateRequestConditionReady,
+		Status: cmmeta.ConditionFalse,
+		Reason: cmapi.CertificateRequestReasonFailed,
+	}) {
+		log.V(4).Info("CertificateRequest is Failed. Ignoring.")
+		return ctrl.Result{}, nil
+	}
+	// Ignore CertificateRequest if it already has a Denied Ready Reason
+	if cmapiutil.CertificateRequestHasCondition(&cr, cmapi.CertificateRequestCondition{
+		Type:   cmapi.CertificateRequestConditionReady,
+		Status: cmmeta.ConditionFalse,
+		Reason: cmapi.CertificateRequestReasonDenied,
+	}) {
+		log.V(4).Info("CertificateRequest already has a Ready condition with Denied Reason. Ignoring.")
+		return ctrl.Result{}, nil
+	}
+
+	// If CertificateRequest has been denied, mark the CertificateRequest as
+	// Ready=Denied and set FailureTime if not already.
+	if cmapiutil.CertificateRequestIsDenied(&cr) {
+		log.V(4).Info("CertificateRequest has been denied. Marking as failed.")
+
+		if cr.Status.FailureTime == nil {
+			nowTime := metav1.NewTime(r.Clock.Now())
+			cr.Status.FailureTime = &nowTime
+		}
+
+		message := "The CertificateRequest was denied by an approval controller"
+		return ctrl.Result{}, r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonDenied, message)
+	}
+
+	if r.CheckApprovedCondition {
+		// If CertificateRequest has not been approved, exit early.
+		if !cmapiutil.CertificateRequestIsApproved(&cr) {
+			log.V(4).Info("certificate request has not been approved")
+			return ctrl.Result{}, nil
+		}
 	}
 
 	// If the certificate data is already set then we skip this request as it
@@ -112,13 +162,15 @@ func (r *CertificateRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result,
 		return ctrl.Result{}, err
 	}
 	r.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonPending, "Processing ADCS request")
-	klog.V(4).Infof("setstatus: ctx=%v, cr=%v", ctx, &cr)
+
+	log.V(4).Info("setstatus", "ctx", ctx, "cr", &cr)
+
 	return ctrl.Result{}, nil
 }
 
 func (r *CertificateRequestReconciler) createAdcsRequest(ctx context.Context, cmRequest *cmapi.CertificateRequest) error {
 	spec := api.AdcsRequestSpec{
-		CSRPEM:    cmRequest.Spec.CSRPEM,
+		CSRPEM:    cmRequest.Spec.Request,
 		IssuerRef: cmRequest.Spec.IssuerRef,
 	}
 	return r.Create(ctx, &api.AdcsRequest{
@@ -139,7 +191,7 @@ func (r *CertificateRequestReconciler) SetupWithManager(mgr ctrl.Manager) error 
 
 func RequestDiffers(adcsReq *api.AdcsRequest, certReq *cmapi.CertificateRequest) bool {
 	a := adcsReq.Spec.CSRPEM
-	b := certReq.Spec.CSRPEM
+	b := certReq.Spec.Request
 	if len(a) != len(b) {
 		return true
 	}

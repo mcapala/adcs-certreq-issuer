@@ -1,7 +1,6 @@
-apiVersion: adcs.certmanager.csf.nokia.com/v1
-kind: AdcsRequest
-metadata:
-  name: adcsrequest-sample
-spec:
-  # Add fields here
-  foo: bar
+#apiVersion: adcs.certmanager.csf.nokia.com/v1
+#kind: AdcsRequest
+#metadata:
+#  name: adcsrequest-sample
+#  namespace: cert-manager
+#spec:

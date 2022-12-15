@@ -13,8 +13,9 @@ import (
 
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
-	"github.com/chojnack/adcs-issuer/adcs"
-	api "github.com/chojnack/adcs-issuer/api/v1"
+	"github.com/nokia/adcs-issuer/adcs"
+	api "github.com/nokia/adcs-issuer/api/v1"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
@@ -24,7 +25,6 @@ const (
 
 type IssuerFactory struct {
 	client.Client
-	Log                      logr.Logger
 	ClusterResourceNamespace string
 	AdcsTemplateName         string
 }
@@ -43,7 +43,8 @@ func (f *IssuerFactory) GetIssuer(ctx context.Context, ref cmmeta.ObjectReferenc
 
 // Get AdcsIssuer object from K8s and create Issuer
 func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey) (*Issuer, error) {
-	log := f.Log.WithValues("AdcsIssuer", key)
+
+	log := ctrl.LoggerFrom(ctx, "AdcsIssuer", key)
 
 	issuer := new(api.AdcsIssuer)
 	if err := f.Client.Get(ctx, key, issuer); err != nil {
@@ -80,18 +81,22 @@ func (f *IssuerFactory) getAdcsIssuer(ctx context.Context, key client.ObjectKey)
 		issuer.Spec.RetryInterval,
 		defaultRetryInterval,
 		log.WithValues("interval", "retryInterval"))
+	adcsTemplateName := f.AdcsTemplateName
+	if issuer.Spec.TemplateName != "" {
+		adcsTemplateName = issuer.Spec.TemplateName
+	}
 	return &Issuer{
 		f.Client,
 		certServ,
 		retryInterval,
 		statusCheckInterval,
-		f.AdcsTemplateName,
+		adcsTemplateName,
 	}, nil
 }
 
 // Get ClusterAdcsIssuer object from K8s and create Issuer
 func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.ObjectKey) (*Issuer, error) {
-	log := f.Log.WithValues("ClusterAdcsIssuer", key)
+	log := ctrl.LoggerFrom(ctx, "ClusterAdcsIssuer", key)
 	key.Namespace = ""
 
 	issuer := new(api.ClusterAdcsIssuer)
@@ -129,12 +134,16 @@ func (f *IssuerFactory) getClusterAdcsIssuer(ctx context.Context, key client.Obj
 		issuer.Spec.RetryInterval,
 		defaultRetryInterval,
 		log.WithValues("interval", "retryInterval"))
+	adcsTemplateName := f.AdcsTemplateName
+	if issuer.Spec.TemplateName != "" {
+		adcsTemplateName = issuer.Spec.TemplateName
+	}
 	return &Issuer{
 		f.Client,
 		certServ,
 		retryInterval,
 		statusCheckInterval,
-		f.AdcsTemplateName,
+		adcsTemplateName,
 	}, nil
 }
 
@@ -165,6 +174,8 @@ func (f *IssuerFactory) getUserPassword(ctx context.Context, secretName string, 
 	}
 	if _, ok := secret.Data["password"]; !ok {
 		return "", "", fmt.Errorf("Password not set in secret")
+
 	}
+
 	return string(secret.Data["username"]), string(secret.Data["password"]), nil
 }

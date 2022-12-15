@@ -1,4 +1,3 @@
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -6,6 +5,13 @@ metadata:
   creationTimestamp: null
   name: manager-role
 rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
 - apiGroups:
   - ""
   resources:
@@ -19,41 +25,61 @@ rules:
   resources:
   - adcsissuers
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
-  - update
   - patch
-  - delete
+  - update
+  - watch
 - apiGroups:
   - adcs.certmanager.csf.nokia.com
   resources:
   - adcsissuers/status
   verbs:
   - get
-  - update
   - patch
+  - update
 - apiGroups:
   - adcs.certmanager.csf.nokia.com
   resources:
   - adcsrequests
   verbs:
+  - create
+  - delete
   - get
   - list
-  - watch
-  - create
-  - update
   - patch
-  - delete
+  - update
+  - watch
 - apiGroups:
   - adcs.certmanager.csf.nokia.com
   resources:
   - adcsrequests/status
   verbs:
   - get
-  - update
   - patch
+  - update
+- apiGroups:
+  - adcs.certmanager.csf.nokia.com
+  resources:
+  - clusteradcsissuers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - adcs.certmanager.csf.nokia.com
+  resources:
+  - clusteradcsissuers/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - cert-manager.io
   resources:
@@ -61,40 +87,16 @@ rules:
   verbs:
   - get
   - list
-  - watch
-  - update
   - patch
+  - update
+  - watch
 - apiGroups:
   - cert-manager.io
   resources:
+  - certificaterequests/finalizers
   - certificaterequests/status
+  - certificates/finalizers
   verbs:
   - get
+  - patch
   - update
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - patch
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
-  - clusteradcsissuers
-  verbs:
-  - get
-  - list
-  - watch
-  - create
-  - update
-  - patch
-  - delete
-- apiGroups:
-  - adcs.certmanager.csf.nokia.com
-  resources:
-  - clusteradcsissuers/status
-  verbs:
-  - get
-  - update
-  - patch

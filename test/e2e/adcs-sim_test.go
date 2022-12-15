@@ -11,7 +11,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/chojnack/adcs-issuer/adcs"
+	"github.com/nokia/adcs-issuer/adcs"
 	"github.com/stretchr/testify/assert"
 )
 

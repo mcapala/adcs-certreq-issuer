@@ -31,7 +31,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/chojnack/adcs-issuer/test/adcs-sim/certserv"
+	"github.com/nokia/adcs-issuer/test/adcs-sim/certserv"
 )
 
 var (
@@ -44,8 +44,8 @@ var (
 
 func main() {
 	port := flag.Int("port", 8443, "Port to listen on")
-	dns := flag.String("dns", "", "Comma separated list of domains for the simulator server certificate")
-	ips := flag.String("ips", "", "Comma separated list of IPs for the simulator server certificate")
+	dns := flag.String("dns", "localhost", "Comma separated list of domains for the simulator server certificate")
+	ips := flag.String("ips", "127.0.0.1", "Comma separated list of IPs for the simulator server certificate")
 	flag.Parse()
 
 	caWorkDir, _ := os.Getwd() //TODO refactor

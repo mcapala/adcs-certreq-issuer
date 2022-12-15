@@ -1,10 +1,10 @@
 # Assume cert-manager is running and a ClusterIssuer 'selfsigned' is present.
 
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: serving-cert  # this name should match the one appeared in kustomizeconfig.yaml
-  namespace: system
+  namespace: cert-manager
 spec:
   # $(SERVICE_NAME) and $(SERVICE_NAMESPACE) will be substituted by kustomize
   commonName: $(SERVICE_NAME).$(SERVICE_NAMESPACE).svc

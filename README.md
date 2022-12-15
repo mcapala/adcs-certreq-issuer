@@ -10,16 +10,23 @@ This implementation is simply a HTTP client that interacts with the ADCS server 
 It supports NTLM authentication.
 
 
+
+
+[![operator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml)
+
+[![Code scanning - action](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml)
+
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v.0.11.0 and currently supports CertificateRequest CRD API version v1alpha2 only.
+ADCS Issuer has been tested with cert-manager v1.7.0 and currently supports CertificateRequest CRD API version v1 only.
 
 ## Configuration and usage
 
 ### Issuers
-The ADCS service data can configured in `AdcsIssuer` or `ClusterAdcsIssuer` CRD objects e.g.:
+The ADCS service data can be configured in `AdcsIssuer` or `ClusterAdcsIssuer` CRD objects e.g.:
 ```
+apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: AdcsIssuer
 metadata:
   name: test-adcs
@@ -31,6 +38,7 @@ spec:
   statusCheckInterval: 6h
   retryInterval: 1h
   url: <adcs-certice-url>
+  templateName: <adcs-template-name>
 ```
 
 The `caBundle` parameter is BASE64-encoded CA certificate which is used by the ADCS server itself, which may not be the same certificate that will be used to sign your request.
@@ -53,6 +61,7 @@ type: Opaque
 ```
 If cluster level issuer configuration is needed then ClusterAdcsUssuer can be defined like this:
 ```
+apiVersion: adcs.certmanager.csf.nokia.com/v1
 kind: ClusterAdcsIssuer
 metadata:
   name: test-adcs
@@ -63,6 +72,7 @@ spec:
   statusCheckInterval: 6h
   retryInterval: 1h
   url: <adcs-certice-url>
+  templateName: <adcs-template-name>
 ```
 The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), must be defined in the namespace where the controller's pod is running, or in the namespace specified by the flag  `-clusterResourceNamespace` (default: `kube-system`).
 
@@ -71,7 +81,7 @@ The secret used by the `ClusterAdcsIssuer` to authenticate (`credentialsRef`), m
 To request a certificate with `AdcsIssuer` the standard `certificate.cert-manager.io` object needs to be created. The `issuerRef` must be set to point to `AdcsIssuer` or `ClusterAdcsIssuer` object
 from group `adcs.certmanager.csf.nokie.com` e.g.:
 ```
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   annotations:
@@ -107,7 +117,7 @@ metadata:
   name: adcs-cert-3831834799
   namespace: c1
   ownerReferences:
-  - apiVersion: cert-manager.io/v1alpha2
+  - apiVersion: cert-manager.io/v1
     blockOwnerDeletion: true
     controller: true
     kind: CertificateRequest
@@ -125,12 +135,42 @@ status:
   state: ready
 ```
 
+#### Auto-request certificate from ingress
+Add the following to an `Ingress` for cert-manager to auto-generate a
+`Certificate` using `Ingress` information with ingress-shim
+```
+metadata:
+  name: test-ingress
+    annotations:
+        cert-manager.io/issuer: "adcs-issuer" #use specific name of issuer
+        cert-manager.io/issuer-kind: "AdcsIssuer" #or AdcsClusterIssuer
+        cert-manager.io/issuer-group: "adcs.certmanager.csf.nokia.com"
+```
+in addition to
+```
+spec:
+  tls:
+    - hosts:
+        - test-host.com
+            secretName: ingress-secret # secret cert-manager stores certificate in
+```
 
 ## Installation
 
 This controller is implemented using [kubebuilder](https://github.com/kubernetes-sigs/kubebuilder). Automatically generated Makefile contains targets needed for build and installation. 
 Generated CRD manifests are stored in `config/crd`. RBAC roles and bindings can be found in config/rbac. There's also a Make target to build controller's Docker image and
 store it in local docker repo (Docker must be installed).
+
+More specific install instructions can be found in `README-DEV.md`
+
+
+### Disable Approval Check
+
+The ADCS Issuer will wait for CertificateRequests to have an [approved condition
+set](https://cert-manager.io/docs/concepts/certificaterequest/#approval) before
+signing. If using an older version of cert-manager (pre v1.3), you can disable
+this check by supplying the command line flag `-enable-approved-check=false` to
+the Issuer Deployment.
 
 ## Testing considerations
 
@@ -169,7 +209,6 @@ More then one directive can be used at a time. e.g. to simulate rejecting the ce
 * Helm chart
 * ...
 
-
 ## Why interfacing with a GUI?
 
 Unfortunately, there are no web services available for ADCS management only a DCOM interface [MS-CSRA](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-csra/40e74714-14bf-4f97-a264-35efbd63a813).
@@ -177,3 +216,38 @@ Unfortunately, there are no web services available for ADCS management only a DC
 (there are SOAP-based web services for certificate enrollment: [MS-XCEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-xcep/08ec4475-32c2-457d-8c27-5a176660a210) 
 and [MS-WSTEP](https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-wstep/4766a85d-0d18-4fa1-a51f-e5cb98b752ea))
 
+
+Installing cert manager 
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.0/cert-manager.yaml
+
+
+kustomize build config/crd > template.yaml
+echo "---" >> template.yaml
+kustomize build config/default >> template.yaml
+
+make dry-run 
+
+cat all-manifests.yaml | kubectl split-yaml -t "{{.kind}}/{{.name}}.yaml" -p manifests
+
+kubectl apply -R -f manifests -n cert-manager
+
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -c manager 
+
+
+make build IMG="docker.io/djkormo/adcs-issuer:dev"
+
+make docker-build docker-push IMG="docker.io/djkormo/adcs-issuer:dev"
+
+docker build . -t docker.io/djkormo/adcs-issuer:dev
+
+docker login docker.io/djkormo
+docker push docker.io/djkormo/adcs-issuer:dev
+
+
+git tag 2.0.1 
+git push origin --tags
+
+
+## License
+
+This project is licensed under the BSD-3-Clause license - see the [LICENSE](https://github.com/nokia/adcs-issuer/blob/master/LICENSE).

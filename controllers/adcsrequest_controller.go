@@ -27,11 +27,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1alpha2"
+	cmapi "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
 	cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 
-	api "github.com/chojnack/adcs-issuer/api/v1"
-	"github.com/chojnack/adcs-issuer/issuers"
+	api "github.com/nokia/adcs-issuer/api/v1"
+	"github.com/nokia/adcs-issuer/issuers"
 )
 
 // AdcsRequestReconciler reconciles a AdcsRequest object
@@ -46,9 +46,8 @@ type AdcsRequestReconciler struct {
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=adcs.certmanager.csf.nokia.com,resources=adcsrequests/status,verbs=get;update;patch
 
-func (r *AdcsRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
-	ctx := context.Background()
-	log := r.Log.WithValues("adcsrequest", req.NamespacedName)
+func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	log := ctrl.LoggerFrom(ctx).WithValues("adcsrequest", req.NamespacedName)
 
 	// your logic here
 	log.Info("Processing request")
@@ -63,8 +62,13 @@ func (r *AdcsRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		// case for deleted object.
 		//
 		// The Manager will log other errors.
+
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+
 	}
+
+	log.V(3).Info("Running request", "Processing request", req.Name)
+
 	// Find the issuer
 	issuer, err := r.IssuerFactory.GetIssuer(ctx, ar.Spec.IssuerRef, ar.Namespace)
 	if err != nil {
@@ -72,12 +76,16 @@ func (r *AdcsRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		return ctrl.Result{}, err
 	}
 
+	if log.V(3).Enabled() {
+		log.V(3).Info("Running request", "template", issuer.AdcsTemplateName)
+	}
+
 	cert, caCert, err := issuer.Issue(ctx, ar)
 	if err != nil {
 		// This is a local error.
 		// We don't change the request status and just put it back on the queue
 		// to re-try later.
-		log.Error(err, fmt.Sprintf("Failed request will be re-tried in %v", issuer.RetryInterval))
+		log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil
 	}
 
@@ -90,15 +98,23 @@ func (r *AdcsRequestReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error)
 		r.setStatus(ctx, ar)
 		return ctrl.Result{Requeue: true, RequeueAfter: issuer.StatusCheckInterval}, nil
 	case api.Ready:
-		cr.Status.Certificate = cert
 
-		if klog.V(5) {
+		// Combine the certificates, as we need the intermediate certs in with the CA.
+		combinedCert := cert
+		if caCert != nil {
+			combinedCert = append(cert, caCert...)
+		}
+		cr.Status.Certificate = combinedCert
+
+		if log.V(5).Enabled() {
 			s := string(cert)
-			klog.Infof("certificate obtained: \n %s ", s)
+			log.V(5).Info("certificate obtained", "certificate", s)
 		}
 
-		cr.Status.CA = caCert
-		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successfull")
+		// CA cert is inside the cert above
+		// cr.Status.CA = caCert
+		r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
+
 	case api.Rejected:
 		// This is a little hack for strange cert-manager behavior in case of failed request. Cert-manager automatically
 		// re-tries such requests (re-created CertificateRequest object) what doesn't make sense in case of rejection.

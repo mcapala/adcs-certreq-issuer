@@ -22,7 +22,7 @@ Create a certificate using selfsigned issuer from cert-manager in order to get t
 cat <<EOF | kubectl -n adcs-issuer-system apply -f -
 
 ``` YAML
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: serving-cert
@@ -100,7 +100,7 @@ Apply a certificate resource, that will make a certificaterequest with the issue
 cat <<EOF | kubectl -n adcs-issuer-system apply -f -
 
 ``` YAML
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   annotations:
@@ -118,3 +118,43 @@ spec:
   - Your organization
   secretName: adcsIssuer-certificate
 ```
+
+
+In one terminal
+
+inside test/adcs-sim
+```
+go run main.go --dns=adcs1.example.com,adcs1.example.com --ips=10.10.10.1,10.10.10.2
+```
+
+
+openssl req -in test/adcs-sim/ca/server.csr -noout -text
+
+
+
+make run  ENABLE_WEBHOOKS=false ENABLE_DEBUG=true
+
+https://localhost:8443/certcarc.asp
+
+https://localhost:8443/certfnsh.asp
+
+
+
+
+username=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.username}' | base64 --decode)
+password=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.password}' | base64 --decode)
+url=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.url}')
+ca=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.caBundle}' | base64 --decode  )
+echo "username: ${username}"
+echo "password: ${password}"
+echo "url: ${url}"
+echo "ca: ${ca}"
+echo ${ca} > ca.crt
+curl   -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+curl  --cacert ./ca.crt  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+
+curl  -u '${username}:${password}' --ntlm '${url}/certsrv/certfnsh.asp' -vv
+
+curl -X POST -k -v -u "${username}:${password}" --ntlm "${url}/certcarc.asp" -vv
+
+curl -X POST  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
