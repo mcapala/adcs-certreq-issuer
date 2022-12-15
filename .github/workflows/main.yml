@@ -21,7 +21,7 @@ jobs:
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
         with:
-          name: siemp/adcs-controller
+          name: djkormo/adcs-issuer
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
           buildargs: VERSION
