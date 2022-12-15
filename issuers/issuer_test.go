@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 var (
 	log = ctrl.Log.WithName("issuer_test")
+
 )
 
 // TODO: provide proper PKCS7 certificates for testing.
@@ -25,7 +27,9 @@ func TestParsingCaCertShouldReturnX509(t *testing.T) {
 	validX509Certificate, err := ioutil.ReadFile("testdata/x509.pem")
 	assert.NoError(t, err)
 	// act
+
 	parsedCaCert, err := parseCaCert(pkcs7Pem, log)
+
 
 	// assert
 	assert.NoError(t, err)
@@ -38,7 +42,9 @@ func TestIncorrectFormatPkcs(t *testing.T) {
 	assert.NoError(t, err)
 
 	// act
+
 	ca, err := parseCaCert(incorrectPKCS7Cert, log)
+
 
 	// assert
 	assert.EqualError(t, err, "parsing PKCS7: ber2der: BER tag length is more than available data")
@@ -50,6 +56,7 @@ func TestEmptyPkcs(t *testing.T) {
 	emptyPKCS7 := []byte(``)
 
 	// act
+
 	ca, err := parseCaCert(emptyPKCS7, log)
 
 	// assert
@@ -62,7 +69,9 @@ func TestIncorrectCertFormat(t *testing.T) {
 	incorrectCertFormat := []byte(`This is not correct!`)
 
 	// act
+
 	ca, err := parseCaCert(incorrectCertFormat, log)
+
 
 	// assert
 	assert.Error(t, err)
@@ -79,7 +88,9 @@ func TestParseCaCertCorrectPKCS7(t *testing.T) {
 	assert.NoError(t, err)
 
 	// act
+
 	ca, err := parseCaCert(rawPkcs7, log)
+
 
 	// assert
 	assert.NoError(t, err)
@@ -92,7 +103,9 @@ func TestCorrectX509Cert(t *testing.T) {
 	x509, err := ioutil.ReadFile("testdata/x509.pem")
 
 	// act
+
 	parsedCaCert, err := parseCaCert(x509, log)
+
 
 	// assert
 	assert.NoError(t, err)

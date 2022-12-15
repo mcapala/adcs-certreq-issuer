@@ -32,9 +32,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
 	"k8s.io/utils/clock"
+
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -87,7 +88,12 @@ func main() {
 	}
 	opts.BindFlags(flag.CommandLine)
 
+
 	flag.Parse()
+	log := klogr.New()
+	ctrl.SetLogger(log)
+	// flag.Parse()
+
 
 	// based on https://sdk.operatorframework.io/docs/building-operators/golang/references/logging/
 
@@ -107,6 +113,7 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	setupLog.Info("Starting ADCS Issuer", "version", version, "build time", buildTime)
+
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,

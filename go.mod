@@ -3,6 +3,7 @@ module github.com/nokia/adcs-issuer
 go 1.17
 
 require (
+
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/fullsailor/pkcs7 v0.0.0-20190404230743-d7302db945fa
 	github.com/go-logr/logr v1.2.0
@@ -15,6 +16,7 @@ require (
 	k8s.io/client-go v0.23.1
 	k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
 	sigs.k8s.io/controller-runtime v0.11.0
+
 )
 
 require (

@@ -12,6 +12,7 @@ import (
 	//cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/fullsailor/pkcs7"
@@ -19,6 +20,7 @@ import (
 	"github.com/nokia/adcs-issuer/adcs"
 	api "github.com/nokia/adcs-issuer/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
+
 )
 
 type Issuer struct {
@@ -56,8 +58,10 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 		// New request
 		adcsResponseStatus, desc, id, err = i.certServ.RequestCertificate(string(ar.Spec.CSRPEM), i.AdcsTemplateName)
 
+
 		if log.V(5).Enabled() {
 			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id)
+
 		}
 	}
 	if err != nil {
@@ -92,16 +96,19 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 
 	// Get a certificateChain from the server.
 	certChain, err := i.certServ.GetCaCertificateChain()
+
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Parse and encode the certificateChain to a valid x509 certificate.
 	ca, err := parseCaCert([]byte(certChain), log)
+
 	if err != nil {
 		log.Error(err, "something went wrong parsing to x509")
 		return nil, nil, err
 	}
+
 
 	if log.V(4).Enabled() {
 		s := string(cert)
@@ -109,6 +116,7 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 	}
 
 	// log.V(4).Info("will return cert", "cert", cert)
+
 
 	return cert, ca, nil
 
@@ -118,14 +126,18 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 // type x509Bytes []byte
 
 // ParseCaCert accepts bytes representing a certificate and returns x509 certificate encoded pem
+
 func parseCaCert(cc []byte, log logr.Logger) ([]byte, error) {
+
 
 	// decode Pem from certificate into block
 	block, rest := pem.Decode([]byte(cc))
 	if block == nil {
+
 		if log.V(3).Enabled() {
 			s := string(rest)
 			log.Info("tried to decode pem", "rest", s)
+
 		}
 		return nil, errors.New("error decoding the pem block")
 	}
