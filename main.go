@@ -46,8 +46,8 @@ const (
 var (
 	scheme    = runtime.NewScheme()
 	setupLog  = ctrl.Log.WithName("setup")
-	version   = "adcs-developement-djkormo"
-	buildTime = "2022-12-15:10:00"
+	version   = "adcs-operator-by-djkormo"
+	buildTime = "2022-12-18:11:00"
 )
 
 func init() {
