@@ -286,7 +286,6 @@ func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsRespo
 		log.Info("Body", "body", bodyString)
 	}
 
-
 	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
 	found := exp.FindStringSubmatch(bodyString)
 	certId := ""
@@ -333,11 +332,9 @@ func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType s
 	}
 	res1, err := s.httpClient.Do(req)
 
-
 	if os.Getenv("ENABLE_DEBUG") == "true" {
 		log.Info("obtainCaCertificate start", "res1", res1)
 	}
-
 
 	if err != nil {
 		log.Error(err, "ADCS Certserv error")

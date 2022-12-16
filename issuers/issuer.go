@@ -12,7 +12,6 @@ import (
 	//cmmeta "github.com/jetstack/cert-manager/pkg/apis/meta/v1"
 	//metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/fullsailor/pkcs7"
@@ -20,7 +19,6 @@ import (
 	"github.com/nokia/adcs-issuer/adcs"
 	api "github.com/nokia/adcs-issuer/api/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
-
 )
 
 type Issuer struct {
@@ -57,7 +55,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 	} else {
 		// New request
 		adcsResponseStatus, desc, id, err = i.certServ.RequestCertificate(string(ar.Spec.CSRPEM), i.AdcsTemplateName)
-
 
 		if log.V(5).Enabled() {
 			log.V(5).Info("new adcsRequest", "adcs response status", adcsResponseStatus, "desc", desc, "id", id)
@@ -109,14 +106,12 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 		return nil, nil, err
 	}
 
-
 	if log.V(4).Enabled() {
 		s := string(cert)
 		log.V(4).Info("parsed certificate", "certificate", s)
 	}
 
 	// log.V(4).Info("will return cert", "cert", cert)
-
 
 	return cert, ca, nil
 
@@ -128,7 +123,6 @@ func (i *Issuer) Issue(ctx context.Context, ar *api.AdcsRequest) ([]byte, []byte
 // ParseCaCert accepts bytes representing a certificate and returns x509 certificate encoded pem
 
 func parseCaCert(cc []byte, log logr.Logger) ([]byte, error) {
-
 
 	// decode Pem from certificate into block
 	block, rest := pem.Decode([]byte(cc))
