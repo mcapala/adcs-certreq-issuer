@@ -11,7 +11,6 @@ import (
 
 var (
 	log = ctrl.Log.WithName("issuer_test")
-
 )
 
 // TODO: provide proper PKCS7 certificates for testing.
@@ -30,7 +29,6 @@ func TestParsingCaCertShouldReturnX509(t *testing.T) {
 
 	parsedCaCert, err := parseCaCert(pkcs7Pem, log)
 
-
 	// assert
 	assert.NoError(t, err)
 	assert.Equal(t, validX509Certificate, parsedCaCert)
@@ -44,7 +42,6 @@ func TestIncorrectFormatPkcs(t *testing.T) {
 	// act
 
 	ca, err := parseCaCert(incorrectPKCS7Cert, log)
-
 
 	// assert
 	assert.EqualError(t, err, "parsing PKCS7: ber2der: BER tag length is more than available data")
@@ -72,7 +69,6 @@ func TestIncorrectCertFormat(t *testing.T) {
 
 	ca, err := parseCaCert(incorrectCertFormat, log)
 
-
 	// assert
 	assert.Error(t, err)
 	assert.EqualError(t, err, "error decoding the pem block")
@@ -91,7 +87,6 @@ func TestParseCaCertCorrectPKCS7(t *testing.T) {
 
 	ca, err := parseCaCert(rawPkcs7, log)
 
-
 	// assert
 	assert.NoError(t, err)
 	assert.Equal(t, cfssOutputX509, ca)
@@ -105,7 +100,6 @@ func TestCorrectX509Cert(t *testing.T) {
 	// act
 
 	parsedCaCert, err := parseCaCert(x509, log)
-
 
 	// assert
 	assert.NoError(t, err)

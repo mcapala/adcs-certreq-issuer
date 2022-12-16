@@ -26,6 +26,7 @@ import (
 	"github.com/nokia/adcs-issuer/controllers"
 	"github.com/nokia/adcs-issuer/healthcheck"
 	"github.com/nokia/adcs-issuer/issuers"
+
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -36,6 +37,7 @@ import (
 	"k8s.io/utils/clock"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -88,12 +90,7 @@ func main() {
 	}
 	opts.BindFlags(flag.CommandLine)
 
-
 	flag.Parse()
-	log := klogr.New()
-	ctrl.SetLogger(log)
-	// flag.Parse()
-
 
 	// based on https://sdk.operatorframework.io/docs/building-operators/golang/references/logging/
 
@@ -104,8 +101,6 @@ func main() {
 	}
 	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
 
-	//ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
 	// Construct a new logr.logger.
 	logger := zap.New(zap.UseDevMode(false), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder))
 	ctrl.SetLogger(logger)
@@ -113,7 +108,6 @@ func main() {
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
 	setupLog.Info("Starting ADCS Issuer", "version", version, "build time", buildTime)
-
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
