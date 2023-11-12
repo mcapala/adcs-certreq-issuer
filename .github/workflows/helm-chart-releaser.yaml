@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'charts/**.yaml'
-      - 'charts/**.yml'
+      - 'chart/**.yaml'
+      - 'chart/**.yml'
 
 jobs:
   release:
