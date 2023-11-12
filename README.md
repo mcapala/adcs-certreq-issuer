@@ -37,6 +37,7 @@ Build statuses:
 
 [![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
 
+
 ## Description
 
 ### Requirements
@@ -285,7 +286,7 @@ docker push docker.io/djkormo/adcs-issuer:dev
 
 
 
-git tag 2.0.2
+git tag 2.0.3
 git push origin --tags
 
 
