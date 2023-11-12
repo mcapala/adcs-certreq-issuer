@@ -291,7 +291,26 @@ git push origin --tags
 
 ```
 
+### Helm chart
 
+Testing locally
+
+```
+
+
+helm lint chart/adcs-issuer
+
+helm template charts/adcs-issuer -n cert-manager --values charts/adcs-issuer/values.yaml
+
+helm template charts/adcs-issuer -n adcs-issuer --values charts/adcs-issuer/values.yaml > adcs-issuer-all.yaml
+
+kubectl -n cert-manager apply -f adcs-issuer-all.yaml 
+
+kubectl -n cert-manager rollout restart deploy adcs-issuer-controller-manager
+
+kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager -f
+
+```
 
 
 ## License
