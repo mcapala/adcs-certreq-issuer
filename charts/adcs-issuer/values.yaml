@@ -24,8 +24,8 @@ controllerManager:
     - --disable-approved-check=false
   securityContext:
     runAsUser: 1000
-  enabledWebHooks: true
-  enabledCaCerts: true
+  enabledWebHooks: false
+  enabledCaCerts: false
   caCertsSecretName: ca-certificates
 metricsService:
   enabled: true
