@@ -10,9 +10,25 @@ controllerManager:
       requests:
         cpu: 100m
         memory: 100Mi
+
   replicas: 1
-kubernetesClusterDomain: cluster.local
+
+  environment:
+    KUBERNETES_CLUSTER_DOMAIN: cluster.local
+    ENABLE_WEBHOOKS: "false"
+    ENABLE_DEBUG: "false"
+  arguments:
+    - --enable-leader-election=true
+    - --cluster-resource-namespace=cert-manager
+    - --zap-log-level=5
+    - --disable-approved-check=false
+  securityContext:
+    runAsUser: 1000
+  enabledWebHooks: true
+  enabledCaCerts: true
+  caCertsSecretName: ca-certificates
 metricsService:
+  enabled: true
   ports:
   - name: https
     port: 8443
