@@ -16,7 +16,7 @@ controllerManager:
 
   rbac:
     enabled: true
-    serviceAccountName: adcs-operator
+    serviceAccountName: adcs-issuser
 
 
   replicas: 1
