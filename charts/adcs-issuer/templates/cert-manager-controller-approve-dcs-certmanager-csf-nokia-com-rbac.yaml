@@ -1,3 +1,4 @@
+{{- if .Values.controllerManager.rbac.enabled  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -24,8 +25,10 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: '{{ include "chart.fullname" . }}-cert-manager-controller-approve:adcs-certmanager-csf-nokia-com'
+  name: {{ include "chart.fullname" . }}-cert-manager-controller-approve:adcs-certmanager-csf-nokia-com
 subjects:
 - kind: ServiceAccount
-  name: '{{ include "chart.fullname" . }}-cert-manager'
-  namespace: '{{ .Release.Namespace }}'
+  name: {{ .Values.controllerManager.rbac.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+
+{{- end  }}    

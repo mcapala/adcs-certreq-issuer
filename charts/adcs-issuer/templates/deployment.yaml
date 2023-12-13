@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "chart.fullname" . }}-controller-manager
+  namespace: {{ .Release.Namespace }}
   labels:
     control-plane: controller-manager
   {{- include "chart.labels" . | nindent 4 }}
@@ -20,7 +21,7 @@ spec:
       containers:
       - args:
         - --enable-leader-election=true
-        - --cluster-resource-namespace=${POD_NAMESPACE}
+        - --cluster-resource-namespace={{ .Release.Namespace }}
         - --zap-log-level=5
         - --disable-approved-check=false
         command:
@@ -38,6 +39,7 @@ spec:
               fieldPath: metadata.namespace
 
         image: {{ .Values.controllerManager.manager.image.repository }}:{{ .Values.controllerManager.manager.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: Always
         name: manager
         ports:
         - containerPort: 9443
@@ -56,7 +58,10 @@ spec:
           subPath: ca-certificates.crt
           readOnly: true
         {{- end }}  
-      terminationGracePeriodSeconds: 10
+      terminationGracePeriodSeconds: 
+      securityContext:
+        {{- toYaml  .Values.controllerManager.securityContext | nindent 8 }}
+      serviceAccountName: {{ .Values.controllerManager.rbac.serviceAccountName }}
       volumes:
       {{- if .Values.controllerManager.enabledWebHooks  }}
       - name: cert
