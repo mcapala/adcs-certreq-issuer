@@ -1,3 +1,4 @@
+{{- if .Values.controllerManager.rbac.enabled  }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -110,8 +111,10 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: '{{ include "chart.fullname" . }}-manager-role'
+  name: {{ include "chart.fullname" . }}-manager-role
 subjects:
 - kind: ServiceAccount
-  name: default
-  namespace: '{{ .Release.Namespace }}'
+  name: {{ .Values.controllerManager.rbac.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+
+{{- end  }}    

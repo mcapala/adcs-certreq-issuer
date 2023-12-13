@@ -1,3 +1,6 @@
+crd:
+  install: true
+
 controllerManager:
   manager:
     image:
@@ -11,6 +14,11 @@ controllerManager:
         cpu: 100m
         memory: 100Mi
 
+  rbac:
+    enabled: true
+    serviceAccountName: adcs-operator
+
+
   replicas: 1
 
   environment:
@@ -22,8 +30,10 @@ controllerManager:
     - --cluster-resource-namespace=cert-manager
     - --zap-log-level=5
     - --disable-approved-check=false
+
   securityContext:
     runAsUser: 1000
+
   enabledWebHooks: false
   enabledCaCerts: false
   caCertsSecretName: ca-certificates
@@ -39,4 +49,5 @@ webhookService:
   - port: 443
     targetPort: 9443
   type: ClusterIP
+
 
