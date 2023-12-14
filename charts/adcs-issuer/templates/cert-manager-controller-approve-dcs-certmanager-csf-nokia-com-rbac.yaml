@@ -30,5 +30,7 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.controllerManager.rbac.serviceAccountName }}
   namespace: {{ .Release.Namespace }}
-
+- kind: ServiceAccount
+  name: {{ .Values.controllerManager.rbac.certManagerServiceAccountName }}
+  namespace: {{ .Values.controllerManager.rbac.certManagerNamespace }}
 {{- end  }}    
