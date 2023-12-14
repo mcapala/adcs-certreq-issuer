@@ -16,7 +16,9 @@ controllerManager:
 
   rbac:
     enabled: true
-    serviceAccountName: adcs-issuser
+    serviceAccountName: adcs-issuer
+    certManagerNamespace: cert-manager
+    certManagerServiceAccountName: cert-manager 
 
 
   replicas: 1
@@ -26,10 +28,10 @@ controllerManager:
     ENABLE_WEBHOOKS: "false"
     ENABLE_DEBUG: "false"
   arguments:
-    - --enable-leader-election=true
-    - --cluster-resource-namespace=cert-manager
-    - --zap-log-level=5
-    - --disable-approved-check=false
+    enable-leader-election: "true"
+    cluster-resource-namespace: cert-manager
+    zap-log-level: 5
+    disable-approved-check: "false"
 
   securityContext:
     runAsUser: 1000

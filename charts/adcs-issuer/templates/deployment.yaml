@@ -19,11 +19,17 @@ spec:
       {{- include "chart.selectorLabels" . | nindent 8 }}
     spec:
       containers:
+        {{- if .Values.controllerManager.arguments }}
       - args:
-        - --enable-leader-election=true
-        - --cluster-resource-namespace={{ .Release.Namespace }}
-        - --zap-log-level=5
-        - --disable-approved-check=false
+        {{- range $key, $value := .Values.controllerManager.arguments }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key  }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        
         command:
         - /manager
         env:
@@ -60,7 +66,7 @@ spec:
         {{- end }}  
       terminationGracePeriodSeconds: 
       securityContext:
-        {{- toYaml  .Values.controllerManager.securityContext | nindent 8 }}
+        {{- toYaml  .Values.controllerManager.securityContext | nindent 10 }}
       serviceAccountName: {{ .Values.controllerManager.rbac.serviceAccountName }}
       volumes:
       {{- if .Values.controllerManager.enabledWebHooks  }}
