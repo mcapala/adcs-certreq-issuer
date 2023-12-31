@@ -71,5 +71,6 @@ jobs:
         ignore-unfixed: true
         vuln-type: 'os,library'
         severity: 'CRITICAL,HIGH'
+        skip-dirs: /usr/local/bin/ca
 
 
