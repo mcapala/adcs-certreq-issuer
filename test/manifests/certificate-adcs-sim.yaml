@@ -9,8 +9,7 @@ spec:
   dnsNames:
   - adcs1.example.com
   - adcs2.example.com
-#  - delay.10m.sim
-#  - reject.sim
+
   issuerRef:
     group: adcs.certmanager.csf.nokia.com
     kind: ClusterAdcsIssuer
