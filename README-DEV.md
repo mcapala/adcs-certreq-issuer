@@ -123,38 +123,98 @@ spec:
 In one terminal
 
 inside test/adcs-sim
+
 ```
-go run main.go --dns=adcs1.example.com,adcs1.example.com --ips=10.10.10.1,10.10.10.2
+
+go build -o adcs-sim main.go
+
+go run main.go  --workdir=/d/development/kubernetes/go/adcs-issuer/test/adcs-sim --dns=adcs1.example.com,adcs1.example.com --ips=10.10.10.1,10.10.10.2
+
+
+./adcs-sim  --workdir=/d/development/kubernetes/go/adcs-issuer/test/adcs-sim --dns=adcs1.example.com,adcs1.example.com --ips=10.10.10.1,10.10.10.2
+
+
 ```
 
+Generate the private key of the root CA:
 
-openssl req -in test/adcs-sim/ca/server.csr -noout -text
+```
+openssl genrsa -out root.pem 4096
+```
+
+Generate the self-signed root CA certificate:
+
+```
+openssl req -x509 -sha256 -new -nodes -key root.pem -days 3650 -out root.key -addext "subjectAltName=DNS:example.com,DNS:*.example.com,IP:10.0.0.1" \
+
+  -subj '/C=PL/ST=Warsaw/L=Mordor/O=ADCSSIM/OU=IT/CN=example.com'
+
+```
+
+Review the certificate:
+```
+openssl x509 -in root.key -text
+```
+
+Based on
+https://stackoverflow.com/questions/10175812/how-to-generate-a-self-signed-ssl-certificate-using-openssl
 
 
 
-make run  ENABLE_WEBHOOKS=false ENABLE_DEBUG=true
+
+openssl x509 -in test/adcs-sim/ca/root.pem -noout -text
+
+
+kubectl -n cert-manager port-forward svc/adcs-sim-service 8443:8443&
+
 
 https://localhost:8443/certcarc.asp
 
 https://localhost:8443/certfnsh.asp
 
+https://localhost:8443/certnew.cer
+
+https://localhost:8443/certnew.p7b
 
 
 
-username=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.username}' | base64 --decode)
-password=$(kubectl get secret test-adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.password}' | base64 --decode)
-url=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.url}')
-ca=$(kubectl get adcsissuer test-adcs-issuer  -n cert-manager -o jsonpath='{.spec.caBundle}' | base64 --decode  )
+openssl s_client -connect localhost:8443 -showcerts
+
+
+
+username=$(kubectl get secret adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.username}' | base64 --decode)
+password=$(kubectl get secret adcs-issuer-credentials  -n cert-manager -o jsonpath='{.data.password}' | base64 --decode)
+url=$(kubectl get adcsissuer adcs-cluster-issuer-adcs-sim  -n cert-manager -o jsonpath='{.spec.url}')
+ca=$(kubectl get clusteradcsissuer adcs-cluster-issuer-adcs-sim  -n cert-manager -o jsonpath='{.spec.caBundle}' | base64 --decode  )
 echo "username: ${username}"
 echo "password: ${password}"
 echo "url: ${url}"
 echo "ca: ${ca}"
 echo ${ca} > ca.crt
-curl   -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
-curl  --cacert ./ca.crt  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+curl  -k -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+curl  -k --cacert ./ca.crt  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
 
-curl  -u '${username}:${password}' --ntlm '${url}/certsrv/certfnsh.asp' -vv
+curl  -k -u '${username}:${password}' --ntlm '${url}/certsrv/certfnsh.asp' -vv
 
 curl -X POST -k -v -u "${username}:${password}" --ntlm "${url}/certcarc.asp" -vv
 
-curl -X POST  -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+curl -X POST -k -u "${username}:${password}" --ntlm "${url}/certfnsh.asp" -vv
+
+
+Usefull command for testing 
+
+  kubectl -n cert-manager logs deploy/adcs-issuer-controller-manager
+
+  kubectl -n cert-manager logs deploy/adcs-sim-deployment
+
+  kubectl -n cert-manager logs deploy/cert-manager
+
+  kubectl -n cert-manager get certificate,certificaterequest,adcsrequest 
+
+  kubectl -n cert-manager delete certificate --all   
+  kubectl -n cert-manager delete certificaterequest --all
+  kubectl -n cert-manager delete adcsrequest --all
+
+  kubectl -n cert-manager rollout restart deploy/adcs-issuer-controller-manager
+  kubectl -n cert-manager rollout restart deploy/adcs-sim-deployment
+

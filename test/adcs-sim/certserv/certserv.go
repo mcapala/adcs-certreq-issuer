@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"flag"
 	"io/ioutil"
 	"math"
 	"math/big"
@@ -31,9 +32,15 @@ type Certserv struct {
 }
 
 var (
-	//TODO refactor caWorkDir  = *flag.String("workdir", "/usr/local/adcs-sim", "ADCS simulator working directory")
-	caWorkDir, _ = os.Getwd()
-	caCertFile   = caWorkDir + "/ca/root.pem"
+	//TODO refactor 
+	//caWorkDir  = *flag.String("directory", "/usr/local/adcs-sim", "ADCS simulator working directory")
+	//caWorkDir, _ = os.Getwd()
+	//caWorkDir = "/d/development/kubernetes/go/adcs-issuer/test/adcs-sim"
+	//caWorkDir  = *flag.String("workdir", "/d/development/kubernetes/go/adcs-issuer/test/adcs-sim", "ADCS simulator working directory")
+	//caCertFile   = caWorkDir + "/ca/root.pem"
+	//caWorkDir=os.Getenv("workdir")
+	caWorkDir=getEnv("workdir","/usr/local/adcs-sim")
+	caCertFile   = caWorkDir + "root.pem"
 	caKeyFile    = caWorkDir + "/ca/root.key"
 	caDir        = caWorkDir + "/ca"
 
@@ -49,16 +56,25 @@ type SimOrders struct {
 	unauthorized bool
 }
 
+func getEnv(key, fallback string) string {
+    if value, ok := os.LookupEnv(key); ok {
+        return value
+    }
+    return fallback
+}
+
 func NewCertserv() (*Certserv, error) {
+	fmt.Println("Using directory %s for simulator in NewCertserv()",caWorkDir)
 	cs := &Certserv{
 		0,
 		nil,
 		nil,
 		nil,
 	}
+	fmt.Println("Using directory %s for simulator",caWorkDir)
 	err := cs.initRootCert()
 	if err != nil {
-		return nil, fmt.Errorf("Error: %s", err.Error())
+		return nil, fmt.Errorf("Error in initRootCert(): %s", err.Error())
 	}
 	return cs, nil
 }
@@ -82,10 +98,10 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	if reqId[0] == "CACert" {
-		file, err := ioutil.ReadFile(caCertFile)
+		file, err := os.ReadFile(caCertFile)
 		if err != nil {
-			respondError(w, "Cannot find root CA cert.")
-			res := Resp{"Cannot find root CA cert.", "Error"}
+			respondError(w, "Cannot find root CA cert in HandleCertnewCer().")
+			res := Resp{"Cannot find root CA cert in HandleCertnewCer().", "Error"}
 			tmpl.Execute(w, res)
 			return
 		}
@@ -93,8 +109,8 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintf(w, "%s", file)
 		return
 	}
-	certFileName := fmt.Sprintf("%s/%s.pem", caDir, reqId[0])
-	csrFileName := fmt.Sprintf("%s/%s.csr", caDir, reqId[0])
+	certFileName := fmt.Sprintf("%s/%s.pem", "ca", reqId[0]) // was CaDir
+	csrFileName := fmt.Sprintf("%s/%s.csr", "ca", reqId[0]) // was CaDir
 
 	file, err := ioutil.ReadFile(certFileName)
 	if err == nil {
@@ -104,7 +120,7 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 		return
 	} else if !os.IsNotExist(err) {
 		// Error other than 'file doesn't exists' occured
-		msg := fmt.Sprintf("Cannot open certificate %s.", reqId[0])
+		msg := fmt.Sprintf("Cannot open certificate %s for %s.", reqId[0], certFileName)
 		res := Resp{msg, "Error"}
 		tmpl.Execute(w, res)
 		return
@@ -112,7 +128,7 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 	// Certificate doesn't exist. Let's process the CSR
 	file, err = ioutil.ReadFile(csrFileName)
 	if err != nil {
-		msg := fmt.Sprintf("Cannot open CSR %s.", reqId[0])
+		msg := fmt.Sprintf("Cannot open CSR %s for %s.", reqId[0], csrFileName)
 		res := Resp{msg, "Error"}
 		tmpl.Execute(w, res)
 		return
@@ -120,7 +136,7 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 	fileInfo, _ := os.Lstat(csrFileName)
 	csr, err := decodeCertRequest(string(file))
 	if err != nil {
-		msg := fmt.Sprintf("Cannot decode CSR %s.", reqId[0])
+		msg := fmt.Sprintf("Cannot decode CSR %s for %s .", reqId[0],csrFileName)
 		res := Resp{msg, "Error"}
 		tmpl.Execute(w, res)
 		return
@@ -176,9 +192,9 @@ func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 }
 
 func (c *Certserv) HandleCertnewP7b(w http.ResponseWriter, r *http.Request) {
-	file, err := ioutil.ReadFile(caCertFile)
+	file, err := os.ReadFile(caCertFile)
 	if err != nil {
-		respondError(w, "Cannot find root CA cert.")
+		respondError(w, "Cannot find root CA cert in HandleCertnewP7b().")
 		return
 	}
 	w.Header().Add("Content-Type", "application/x-pkcs7-certificates")
@@ -241,7 +257,13 @@ func (c *Certserv) HandleCertfnshAsp(w http.ResponseWriter, req *http.Request) {
 
 	if orders.delay > 0 || orders.reject {
 		certId := atomic.AddUint64(&c.currentID, 1)
-		csrFileName := fmt.Sprintf("ca/%d.csr", certId)
+		csrFileName := fmt.Sprintf("/usr/local/adcs-sim/ca/%d.csr", certId) // adding caWorkDir
+		fmt.Printf("Writing %s file\n", csrFileName)
+
+		//HandleCertfnshAsp
+		//Orders: &{true 0 false}
+		//Cannot write CSR file: open ca/1.csr: no such file or directory 
+		fmt.Printf("Writing %s file\n", csrFileName)
 		err = ioutil.WriteFile(csrFileName, []byte(bodyCsr[0]), 0644)
 		if err != nil {
 			m := "Cannot write CSR file"
@@ -286,7 +308,7 @@ func (c *Certserv) CreateCertificatePem(csr *x509.CertificateRequest) ([]byte, e
 		Issuer:         c.caCert.Issuer,
 		Subject:        csr.Subject,
 		NotBefore:      time.Now(),
-		NotAfter:       time.Now().Add(365 * 24 * time.Hour),
+		NotAfter:       time.Now().Add(365 * 24 * time.Hour), // hardcoded to one year
 		KeyUsage:       keyUsages,
 		ExtKeyUsage:    []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:       csr.DNSNames,
@@ -325,7 +347,7 @@ func (c *Certserv) CreateCertificateChainPem(csr *x509.CertificateRequest) ([]by
 	}
 	caBytes, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot find root CA cert. %s", err.Error())
+		return nil, fmt.Errorf("Cannot find root CA cert in CreateCertificateChainPem(). %s", err.Error())
 	}
 
 	bytes = append(bytes, caBytes...)
@@ -388,29 +410,30 @@ func respondError(w http.ResponseWriter, text string) {
 }
 
 func (c *Certserv) initRootCert() error {
+	//fmt.Println("Reading cert file . %s", caCertFile)
 	bytes, err := ioutil.ReadFile(caCertFile)
 	if err != nil {
-		return fmt.Errorf("Cannot find root CA cert. %s", err.Error())
+		return fmt.Errorf("Cannot find root CA cert 1. %s ", err.Error())
 	}
 	c.caCert, err = pki.DecodeX509CertificateBytes(bytes)
 	if err != nil {
-		return fmt.Errorf("Cannot decode root CA cert. %s", err.Error())
+		return fmt.Errorf("Cannot decode root CA cert 2. %s", err.Error())
 	}
-	//fmt.Printf("%+v", c.caCert)
+	fmt.Printf("%+v", c.caCert)
 
 	bytes, err = ioutil.ReadFile(caKeyFile)
 	if err != nil {
-		return fmt.Errorf("Cannot find root CA key. %s", err.Error())
+		return fmt.Errorf("Cannot find root CA key 3. %s", err.Error())
 	}
 	c.caKey, err = pki.DecodePKCS1PrivateKeyBytes(bytes)
 	if err != nil {
-		return fmt.Errorf("Cannot decode root CA key. %s", err.Error())
+		return fmt.Errorf("Cannot decode root CA key 4. %s", err.Error())
 	}
 
 	// Check for existing CSRs and update currentID.
 	files, err := ioutil.ReadDir(caDir)
 	if err != nil {
-		return fmt.Errorf("Cannot read CA directory. %s", err.Error())
+		return fmt.Errorf("Cannot read CA directory 5. %s", err.Error())
 	}
 	exp := regexp.MustCompile(`^([0-9]+)\.csr$`)
 	var id float64
