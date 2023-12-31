@@ -27,8 +27,8 @@ FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /workspace/manager .
 COPY --from=builder /workspace/adcs-sim /usr/local/bin/
-
-COPY --from=builder /workspace/adcs-sim/ca /usr/local/adcs-sim/ca
+# removing ca cert and key
+#COPY --from=builder /workspace/adcs-sim/ca /usr/local/adcs-sim/ca
 COPY --from=builder /workspace/adcs-sim/templates /usr/local/adcs-sim/templates
 COPY --from=builder /workspace/manager /usr/local/adcs-sim/manager
 
