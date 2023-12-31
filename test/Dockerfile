@@ -12,25 +12,30 @@ COPY go.mod go.mod
 COPY go.sum go.sum
 
 
-
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
 # Copy the go source
-#COPY main.go main.go
+
 COPY adcs-sim/ adcs-sim/
 COPY e2e/ 2e2/
+RUN	mkdir -p /usr/local/adcs-sim
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o adcs-sim adcs-sim/main.go
-#RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=off go build  -o adcs-sim main.go
-#RUN GO111MODULE=off go build  -o adcs-sim main.go
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
+
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -o manager adcs-sim/main.go
+
 FROM gcr.io/distroless/static:nonroot 
 WORKDIR /
-COPY --from=builder /workspace/adcs-sim .
+COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/adcs-sim /usr/local/bin/
+
+COPY --from=builder /workspace/adcs-sim/ca /usr/local/adcs-sim/ca
+COPY --from=builder /workspace/adcs-sim/templates /usr/local/adcs-sim/templates
+COPY --from=builder /workspace/manager /usr/local/adcs-sim/manager
+
 USER nonroot:nonroot
 
-ENTRYPOINT ["/adcs-sim"]
+ENTRYPOINT ["/usr/local/adcs-sim/manager"]
+

@@ -36,3 +36,4 @@ adcs-sim
 *.crt
 *.key
 *-all.yaml
+*.exe
