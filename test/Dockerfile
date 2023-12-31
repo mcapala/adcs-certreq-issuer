@@ -36,3 +36,4 @@ USER nonroot:nonroot
 
 ENTRYPOINT ["/usr/local/adcs-sim/manager"]
 
+
