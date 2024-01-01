@@ -21,6 +21,14 @@ import (
 	"time"
 
 	"github.com/jetstack/cert-manager/pkg/util/pki"
+
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"time"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
 )
 
 type Certserv struct {
@@ -50,6 +58,13 @@ var (
 	tmplUnauthorized = caWorkDir + "/templates/unauth.tmpl"
 )
 
+var (
+	//scheme    = runtime.NewScheme()
+	setupLog  = ctrl.Log.WithName("adcs-sim")
+	version   = "adcs-sim-by-djkormo"
+	buildTime = "2023-12-31:23:00"
+	
+)
 type SimOrders struct {
 	reject       bool
 	delay        time.Duration
@@ -308,6 +323,7 @@ func (c *Certserv) CreateCertificatePem(csr *x509.CertificateRequest) ([]byte, e
 		Issuer:         c.caCert.Issuer,
 		Subject:        csr.Subject,
 		NotBefore:      time.Now(),
+
 		NotAfter:       time.Now().Add(365 * 24 * time.Hour), // hardcoded to one year
 		KeyUsage:       keyUsages,
 		ExtKeyUsage:    []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
@@ -449,6 +465,7 @@ func (c *Certserv) initRootCert() error {
 		}
 	}
 	c.currentID = uint64(id)
-	fmt.Printf("Startign with id = %d\n", c.currentID)
+	fmt.Printf("Starting with id = %d\n", c.currentID)
+	setupLog.Info("Configuration","workdir ", caWorkDir)
 	return nil
 }
