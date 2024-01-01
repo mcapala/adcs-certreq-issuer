@@ -31,6 +31,12 @@ import (
 	"os"
 	"strings"
 	"github.com/nokia/adcs-issuer/test/adcs-sim/certserv"
+	zaplogfmt "github.com/sykesm/zap-logfmt"
+	uzap "go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"time"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 )
 
@@ -51,34 +57,66 @@ func getEnv(key, fallback string) string {
     return fallback
 }
 
+var (
+	//scheme    = runtime.NewScheme()
+	setupLog  = ctrl.Log.WithName("adcs-sim")
+	version   = "adcs-sim-by-djkormo"
+	buildTime = "2024-01-01:16:00"
+	//buildTime= time.Now().UTC().Format("2006-01-02 15:04:05")
+)
+
 func main() {
 	port := flag.Int("port", 8443, "Port to listen on")
 	dns := flag.String("dns", "", "Comma separated list of domains for the simulator server certificate")
 	ips := flag.String("ips", "", "Comma separated list of IPs for the simulator server certificate")
 
+	opts := zap.Options{
+		Development: false, //was true
+	}
+	opts.BindFlags(flag.CommandLine)
+
 	flag.Parse()
 
+	
+	// based on https://sdk.operatorframework.io/docs/building-operators/golang/references/logging/
 
-	fmt.Printf("Using %s directory for simulator in main\n", caWorkDir)
-    fmt.Printf("Directories in %s\n",caWorkDir)
+	configLog := uzap.NewProductionEncoderConfig()
+	// changing  time format to RFC3339Nano -> 2006-01-02T15:04:05.999999999Z07:00"
+	configLog.EncodeTime = func(ts time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(ts.UTC().Format(time.RFC3339Nano))
+	}
+	logfmtEncoder := zaplogfmt.NewEncoder(configLog)
+
+	// Construct a new logr.logger.
+	logger := zap.New(zap.UseDevMode(false), zap.WriteTo(os.Stdout), zap.Encoder(logfmtEncoder))
+	ctrl.SetLogger(logger)
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	setupLog.Info("Starting ADCS Simulator", "version", version, "build time", buildTime)	
+	setupLog.Info("Directories in in /ca","directory", caWorkDir)
+
+	
 	files, err := ioutil.ReadDir(caWorkDir)
     if err != nil {
         log.Fatal(err)
     }
 
     for _, file := range files {
-        fmt.Println(file.Name(), file.IsDir())
+		setupLog.Info("Scanning directories","Directory: ", file.Name(),"is dir",file.IsDir())
     }
-	fmt.Printf("Files in %s/ca\n",caWorkDir)
+	setupLog.Info("Files in /ca","directory", caWorkDir)
+	
 	filesca, err := ioutil.ReadDir(caWorkDir+"/ca")
     if err != nil {
         log.Fatal(err)
     }
     for _, fileca := range filesca {
-        fmt.Println(fileca.Name(), fileca.IsDir())
+		setupLog.Info("Scanning files","File: ", fileca.Name(),"is dir",fileca.IsDir())
     }
-
-	fmt.Printf("Files in %s/templates\n",caWorkDir)
+	
+	setupLog.Info("Scanning files","File in directory: ", caWorkDir)	
+	setupLog.Info("Files in /templates","directory", caWorkDir)
 
 	filestemplate, err := ioutil.ReadDir(caWorkDir+"/templates")
     if err != nil {
@@ -86,7 +124,7 @@ func main() {
     }
 
     for _, filetemplate := range filestemplate {
-        fmt.Println(filetemplate.Name(), filetemplate.IsDir())
+		setupLog.Info("Scanning files","File: ", filetemplate.Name(),"is dir",filetemplate.IsDir())
     }
 
 	certserv, err := certserv.NewCertserv()
@@ -107,7 +145,10 @@ func main() {
 
 // Generate certificate for the simulator server TLS
 func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) error {
-	fmt.Printf("Using %s directory for simulator in generateServerCertificate: ip: %s, dns %s \n", caWorkDir, *ips,*dns)
+
+	setupLog.Info("Configuration","workdir ", caWorkDir)
+	setupLog.Info("Configuration","ip ", *ips)
+	setupLog.Info("Configuration","dns ", *dns)
 	var ipAddresses []net.IP
 	if ips != nil && len(*ips) > 0 {
 		for _, ipString := range strings.Split(*ips, ",") {
@@ -128,7 +169,9 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 	organization := []string{"ADCS simulator for cert-manager testing"}
 
 	if len(ipAddresses) == 0 && len(dnsNames) == 0 {
+		setupLog.Info("No subjects specified on certificate","ipAddresses", ipAddresses,"dnsNames",dnsNames)
 		return fmt.Errorf("no subjects specified on certificate")
+		
 	}
 	var commonName string
 	if len(dnsNames) > 0 {
@@ -159,7 +202,7 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 		return fmt.Errorf("error creating x509 key: %s", err.Error())
 	}
 	keyBytes := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
-	fmt.Printf("Writing server key file: %s\n", serverKey)
+	setupLog.Info("Writting","key file ", serverKey)
 	err = os.WriteFile(serverKey, keyBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing key file: %s", err.Error())
