@@ -4,15 +4,13 @@ set -u
 
 set -e
 
-KUBERNETES_VERSION=v1.22.10
+KUBERNETES_VERSION=v1.26.1
 GO_VERSION=1.17.8
 OPERATOR_SDK_VERSION=v1.19.x
-
-
-
+CERT_MANAGER_VERSION=v1.12.6 
 
 sudo apt-get update
-sudo apt-get install snap
+sudo apt-get install snap dos2unix 
 
 
 # uninstall existing golang 
@@ -114,6 +112,22 @@ helm version
 minikube start -p aged --kubernetes-version=${KUBERNETES_VERSION}
 
 kubectl get nodes -o wide
+
+# install cert-manager
+
+helm repo add jetstack https://charts.jetstack.io --force-update
+
+helm repo update
+
+helm search repo cert-manager
+helm search repo cert-manager --versions | grep v1.
+
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version $CERT_MANAGER_VERSION  \
+  --set installCRDs=true
 
 
 code --install-extension redhat.vscode-yaml --force
