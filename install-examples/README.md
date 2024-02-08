@@ -7,7 +7,7 @@ helm repo update
 ```
 ```
 helm search repo cert-manager
-helm search repo cert-manager --versions 
+helm search repo cert-manager --versions | grep v1.
 ```
 ```
 helm install \
@@ -110,4 +110,3 @@ NAME            NAMESPACE       REVISION        UPDATED                         
 adcs-issuer     adcs-issuer     1               2024-02-07 21:57:18.0829885 +0100 CET   deployed        adcs-issuer-2.0.8               2.0.8
 cert-manager    cert-manager    1               2024-02-07 22:16:03.1434831 +0100 CET   deployed        cert-manager-v1.12.6            v1.12.6
 </pre>
-
