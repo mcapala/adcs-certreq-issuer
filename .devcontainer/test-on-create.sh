@@ -130,6 +130,15 @@ helm install \
   --set installCRDs=true
 
 
+### add adcs issuer chart repo
+
+helm repo add djkormo-adcs-issuer https://djkormo.github.io/adcs-issuer/ --force-update
+
+### check all versions 
+
+helm search repo adcs-issuer  --versions
+
+
 code --install-extension redhat.vscode-yaml --force
 code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
 
