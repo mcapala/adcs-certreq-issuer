@@ -1,8 +1,8 @@
 #!/bin/bash
 
 set -u
-
 set -e
+set -x
 
 KUBERNETES_VERSION=v1.26.1
 GO_VERSION=1.17.8
