@@ -1,0 +1,82 @@
+{{- if .Values.simulator.enabled  }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{.Values.simulator.deploymentName | default "adcs-sim-deployment" }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: adcs-sim
+  template:
+    metadata:
+      labels:
+        control-plane: adcs-sim
+    spec:
+      containers:
+        {{- if .Values.simulator.arguments }}
+      - args:
+        {{- range $key, $value := .Values.simulator.arguments }}
+        {{- if $value }}
+        - --{{ $key }}={{ $value }}
+        {{- else }}
+        - --{{ $key  }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+
+        command:
+        - /usr/local/adcs-sim/manager
+        image: {{ .Values.simulator.image.repository }}:{{ .Values.simulator.image.tag }}
+        imagePullPolicy: Always
+        env:
+      
+        - name: ENABLE_DEBUG
+          value: {{ .Values.simulator.environment.ENABLE_DEBUG |quote }}
+
+        name: manager
+        volumeMounts:
+
+        # emptydirs for storing csr and cert files
+        - name: csr
+          mountPath: "/usr/local/adcs-sim/ca"
+
+        # ca cert 
+        - name: config-pem
+          mountPath: "/usr/local/adcs-sim/ca/root.pem"
+          subPath: root.pem
+          readOnly: true
+
+        # ca key
+        - name: config-key
+          mountPath: "/usr/local/adcs-sim/ca/root.key"
+          subPath: root.key
+          readOnly: true
+
+        ports:
+        - containerPort:  {{ .Values.simulator.containerPort | default 8443 }}  # the same as --port=8443 in arguments
+          name: adcs-sim
+          protocol: TCP
+
+        resources: {{- toYaml .Values.simulator.resources | nindent 10 }}
+        
+
+      terminationGracePeriodSeconds: 10
+
+      volumes:
+
+        - name: csr
+          emptyDir:
+            sizeLimit: 50Mi 
+
+        - name: config-pem
+          configMap:
+            name: {{.Values.simulator.configMapName | default "adcs-sim-configmap" }} # configmap for storing ca cert
+
+        - name: config-key
+          configMap:
+            name: {{.Values.simulator.configMapName | default "adcs-sim-configmap" }} # configmap for storing ca key
+
+
+{{- end  }}    

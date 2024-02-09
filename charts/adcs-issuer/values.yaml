@@ -5,7 +5,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer
-      tag: latest
+      tag: 2.0.8
     resources:
       limits:
         cpu: 100m
@@ -29,7 +29,7 @@ controllerManager:
     ENABLE_DEBUG: "false"
   arguments:
     enable-leader-election: "true"
-    cluster-resource-namespace: cert-manager
+    cluster-resource-namespace: adcs-issuer # must be the same as chart namespace
     zap-log-level: 5
     disable-approved-check: "false"
 
@@ -52,4 +52,37 @@ webhookService:
     targetPort: 9443
   type: ClusterIP
 
+simulator:
+  enabled: true
+  clusterIssuserName: adcs-sim-adcsclusterissuer
+  deploymentName: adcs-sim-deployment
+  configMapName: adcs-sim-configmap
+  secretName: adcs-sim-secret
+  serviceName: adcs-sim-service 
+  image:
+    repository: djkormo/adcs-sim
+    tag: 0.0.5
 
+  environment:
+    ENABLE_DEBUG: "false"
+
+  arguments:
+      dns: adcs-sim-service.adcs-issuer.svc,adcs2.example.com 
+      ips: 10.10.10.1,10.10.10.2
+      port: 8443
+
+  containerPort: 8443
+  servicePort: 8443
+
+  resources:
+
+    limits:
+      cpu: 100m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 100Mi  
+
+  exampleCertificate:
+    enabled: true 
+    name: adcs-sim-certificate    
