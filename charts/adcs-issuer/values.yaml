@@ -57,11 +57,12 @@ simulator:
   clusterIssuserName: adcs-sim-adcsclusterissuer
   deploymentName: adcs-sim-deployment
   configMapName: adcs-sim-configmap
+  secretCertificateName: adcs-sim-certificate-secret
   secretName: adcs-sim-secret
   serviceName: adcs-sim-service 
   image:
     repository: djkormo/adcs-sim
-    tag: 0.0.5
+    tag: 0.0.6
 
   environment:
     ENABLE_DEBUG: "false"
@@ -73,6 +74,32 @@ simulator:
 
   containerPort: 8443
   servicePort: 8443
+
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: 8443 # the same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: 8443 # the same as containerPort
+      scheme: HTTPS
+    timeoutSeconds: 20
+    periodSeconds: 20
+    initialDelaySeconds: 10
+
+  podSecurityContext:
+    runAsUser: 1000
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+      - all
 
   resources:
 

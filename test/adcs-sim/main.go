@@ -24,37 +24,39 @@ import (
 	"encoding/pem"
 	"flag"
 	"fmt"
+	"sync/atomic"
+
+	"github.com/nokia/adcs-issuer/test/adcs-sim/certserv"
+
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
-	"github.com/nokia/adcs-issuer/test/adcs-sim/certserv"
+	"time"
+
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"time"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
 )
 
 var (
 
 	//caWorkDir = flag.Lookup("workdir").Value.(flag.Getter).Get().(string)
-   caWorkDir="/usr/local/adcs-sim"
-   serverPem = caWorkDir + "/ca/server.pem"
-   serverKey = caWorkDir + "/ca/server.key"
-   serverCsr = caWorkDir + "/ca/server.csr"
-
+	caWorkDir = "/usr/local/adcs-sim"
+	serverPem = caWorkDir + "/ca/server.pem"
+	serverKey = caWorkDir + "/ca/server.key"
+	serverCsr = caWorkDir + "/ca/server.csr"
 )
 
 func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
-    }
-    return fallback
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
 }
 
 var (
@@ -77,7 +79,6 @@ func main() {
 
 	flag.Parse()
 
-	
 	// based on https://sdk.operatorframework.io/docs/building-operators/golang/references/logging/
 
 	configLog := uzap.NewProductionEncoderConfig()
@@ -93,39 +94,39 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	setupLog.Info("Starting ADCS Simulator", "version", version, "build time", buildTime)	
-	setupLog.Info("Directories in in /ca","directory", caWorkDir)
+	setupLog.Info("Starting ADCS Simulator", "version", version, "build time", buildTime)
+	setupLog.Info("Http", "port ", port)
+	setupLog.Info("Directories in in /ca", "directory", caWorkDir)
 
-	
 	files, err := ioutil.ReadDir(caWorkDir)
-    if err != nil {
-        log.Fatal(err)
-    }
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    for _, file := range files {
-		setupLog.Info("Scanning directories","Directory: ", file.Name(),"is dir",file.IsDir())
-    }
-	setupLog.Info("Files in /ca","directory", caWorkDir)
-	
-	filesca, err := ioutil.ReadDir(caWorkDir+"/ca")
-    if err != nil {
-        log.Fatal(err)
-    }
-    for _, fileca := range filesca {
-		setupLog.Info("Scanning files","File: ", fileca.Name(),"is dir",fileca.IsDir())
-    }
-	
-	setupLog.Info("Scanning files","File in directory: ", caWorkDir)	
-	setupLog.Info("Files in /templates","directory", caWorkDir)
+	for _, file := range files {
+		setupLog.Info("Scanning directories", "Directory: ", file.Name(), "is dir", file.IsDir())
+	}
+	setupLog.Info("Files in /ca", "directory", caWorkDir)
 
-	filestemplate, err := ioutil.ReadDir(caWorkDir+"/templates")
-    if err != nil {
-        log.Fatal(err)
-    }
+	filesca, err := ioutil.ReadDir(caWorkDir + "/ca")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, fileca := range filesca {
+		setupLog.Info("Scanning files", "File: ", fileca.Name(), "is dir", fileca.IsDir())
+	}
 
-    for _, filetemplate := range filestemplate {
-		setupLog.Info("Scanning files","File: ", filetemplate.Name(),"is dir",filetemplate.IsDir())
-    }
+	setupLog.Info("Scanning files", "File in directory: ", caWorkDir)
+	setupLog.Info("Files in /templates", "directory", caWorkDir)
+
+	filestemplate, err := ioutil.ReadDir(caWorkDir + "/templates")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, filetemplate := range filestemplate {
+		setupLog.Info("Scanning files", "File: ", filetemplate.Name(), "is dir", filetemplate.IsDir())
+	}
 
 	certserv, err := certserv.NewCertserv()
 	if err != nil {
@@ -136,6 +137,20 @@ func main() {
 		fmt.Printf("Cannot generate server certificate generateServerCertificate() : %s\n", err.Error())
 	}
 
+	isReady := &atomic.Value{}
+	isReady.Store(false)
+
+	go func() {
+		setupLog.Info("HandleHealthz","Readyz probe is negative by default...","")
+		time.Sleep(5* time.Second) // 5 seconds hardcoded
+		isReady.Store(true)
+		setupLog.Info("HandleHealthz","Readyz probe is positive","")
+	}()
+
+	//TODO ADD livenes and readiness
+	http.HandleFunc("/healthz", HandleHealthz)
+	http.HandleFunc("/readyz", HandleReadyz(isReady))
+	//http.HandleFunc("/readyz", HandleReadyz)
 	http.HandleFunc("/certnew.cer", certserv.HandleCertnewCer)
 	http.HandleFunc("/certnew.p7b", certserv.HandleCertnewP7b)
 	http.HandleFunc("/certcarc.asp", certserv.HandleCertcarcAsp)
@@ -146,9 +161,9 @@ func main() {
 // Generate certificate for the simulator server TLS
 func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) error {
 
-	setupLog.Info("Configuration","workdir ", caWorkDir)
-	setupLog.Info("Configuration","ip ", *ips)
-	setupLog.Info("Configuration","dns ", *dns)
+	setupLog.Info("Configuration", "workdir ", caWorkDir)
+	setupLog.Info("Configuration", "ip ", *ips)
+	setupLog.Info("Configuration", "dns ", *dns)
 	var ipAddresses []net.IP
 	if ips != nil && len(*ips) > 0 {
 		for _, ipString := range strings.Split(*ips, ",") {
@@ -169,9 +184,9 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 	organization := []string{"ADCS simulator for cert-manager testing"}
 
 	if len(ipAddresses) == 0 && len(dnsNames) == 0 {
-		setupLog.Info("No subjects specified on certificate","ipAddresses", ipAddresses,"dnsNames",dnsNames)
+		setupLog.Info("No subjects specified on certificate", "ipAddresses", ipAddresses, "dnsNames", dnsNames)
 		return fmt.Errorf("no subjects specified on certificate")
-		
+
 	}
 	var commonName string
 	if len(dnsNames) > 0 {
@@ -202,7 +217,7 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 		return fmt.Errorf("error creating x509 key: %s", err.Error())
 	}
 	keyBytes := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)})
-	setupLog.Info("Writting","key file ", serverKey)
+	setupLog.Info("Writting", "key file ", serverKey)
 	err = os.WriteFile(serverKey, keyBytes, 0644)
 	if err != nil {
 		return fmt.Errorf("error writing key file: %s", err.Error())
@@ -232,3 +247,27 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 	}
 	return nil
 }
+
+
+//Based on https://blog.gopheracademy.com/advent-2017/kubernetes-ready-service/
+
+// Liveness
+
+func HandleHealthz(w http.ResponseWriter, r *http.Request) {
+	setupLog.Info("HandleHealthz","check","Ok")
+	w.WriteHeader(http.StatusOK)
+
+	return
+}
+
+// Readiness
+ func  HandleReadyz(isReady *atomic.Value) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+ 		if isReady == nil || !isReady.Load().(bool) {
+ 			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+ 			return
+ 		}
+		setupLog.Info("HandleReadyz","check","Ok")
+ 		w.WriteHeader(http.StatusOK)
+ 	}
+ } 

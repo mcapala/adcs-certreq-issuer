@@ -5,10 +5,10 @@ export $(shell sed 's/=.*//' $(dpl))
 # DOCKER TASKS
 # Build the container
 build: ## Build the container
-	DOCKER_BUILDKIT=1 docker build -t $(APP_NAME) .
+	DOCKER_BUILDKIT=1 docker build -t $(APP_NAME) . --progress=plain
 
 build-nc: ## Build the container without caching
-	DOCKER_BUILDKIT=1 docker build --no-cache -t $(APP_NAME) .
+	DOCKER_BUILDKIT=1 docker build --no-cache -t $(APP_NAME) . --progress=plain
 
 run: ## Run container on port configured in `config.env`
 	docker run --name $(APP_NAME) -it  $(DOCKER_REPO)/$(APP_NAME):latest  bash
@@ -39,3 +39,10 @@ tag-latest: ## Generate container `{version}` tag
 tag-version: ## Generate container `latest` tag
 	@echo 'create tag $(VERSION)'
 	docker tag $(APP_NAME) $(DOCKER_REPO)/$(APP_NAME):$(VERSION)
+
+
+
+inspect: ## Generate container `latest` tag
+	@echo 'inspect $(APP_NAME)'
+	docker history $(APP_NAME)
+	docker inspect $(APP_NAME)
