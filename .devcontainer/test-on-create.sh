@@ -139,12 +139,12 @@ helm repo add djkormo-adcs-issuer https://djkormo.github.io/adcs-issuer/ --force
 helm search repo adcs-issuer  --versions
 
 
-code --install-extension redhat.vscode-yaml --force
-code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
+#code --install-extension redhat.vscode-yaml --force
+#code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
 
-code --install-extension golang.Go --force
-code --install-extension 766b.go-outliner --force
+#code --install-extension golang.Go --force
+#code --install-extension 766b.go-outliner --force
 
-code --install-extension mhutchie.git-graph --force
+#code --install-extension mhutchie.git-graph --force
 
 echo "done"
