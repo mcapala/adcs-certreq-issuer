@@ -78,7 +78,7 @@ rm -fr operator-sdk
 alias k='kubectl'
 alias kubectx='kubectl config use-context '
 alias kubens='kubectl config set-context --current --namespace '
-
+alias kge='kubectl get events --sort-by=.metadata.creationTimestamp'
 
 # krew plugins 
 
@@ -146,5 +146,12 @@ helm search repo adcs-issuer  --versions
 #code --install-extension 766b.go-outliner --force
 
 #code --install-extension mhutchie.git-graph --force
+
+
+
+echo "alias k='kubectl' " >> ~/.bashrc 
+echo "alias kubectx='kubectl config use-context ' " >> ~/.bashrc 
+echo "alias kubens='kubectl config set-context --current --namespace ' " >> ~/.bashrc 
+echo "alias kge='kubectl get events --sort-by=.metadata.creationTimestamp' " >> ~/.bashrc 
 
 echo "done"
