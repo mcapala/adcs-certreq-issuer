@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
+  strategy:
+    type:
+      Recreate
   selector:
     matchLabels:
       control-plane: adcs-sim
@@ -14,6 +17,8 @@ spec:
       labels:
         control-plane: adcs-sim
     spec:
+      securityContext:
+        {{- toYaml  .Values.simulator.podSecurityContext | nindent 8 }}
       containers:
         {{- if .Values.simulator.arguments }}
       - args:
@@ -61,8 +66,27 @@ spec:
 
         resources: {{- toYaml .Values.simulator.resources | nindent 10 }}
         
+        securityContext:
+        {{- toYaml  .Values.simulator.containerSecurityContext | nindent 10 }}
+
+        {{- with .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+
+        {{- with .Values.simulator.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        livenessProbe:
+
+        {{- with .Values.simulator.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
 
       terminationGracePeriodSeconds: 10
+
 
       volumes:
 
@@ -71,12 +95,12 @@ spec:
             sizeLimit: 50Mi 
 
         - name: config-pem
-          configMap:
-            name: {{.Values.simulator.configMapName | default "adcs-sim-configmap" }} # configmap for storing ca cert
+          secret:
+            secretName: {{.Values.simulator.secretCertificateName | default "adcs-sim-certificate-secret" }} # secret for storing ca cert
 
         - name: config-key
-          configMap:
-            name: {{.Values.simulator.configMapName | default "adcs-sim-configmap" }} # configmap for storing ca key
+          secret:
+            secretName: {{.Values.simulator.secretCertificateName | default "adcs-sim-certificate-secret" }} # secret for storing ca key
 
 
 {{- end  }}    

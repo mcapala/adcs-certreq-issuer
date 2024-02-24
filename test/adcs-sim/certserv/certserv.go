@@ -40,13 +40,7 @@ type Certserv struct {
 }
 
 var (
-	//TODO refactor 
-	//caWorkDir  = *flag.String("directory", "/usr/local/adcs-sim", "ADCS simulator working directory")
-	//caWorkDir, _ = os.Getwd()
-	//caWorkDir = "/d/development/kubernetes/go/adcs-issuer/test/adcs-sim"
-	//caWorkDir  = *flag.String("workdir", "/d/development/kubernetes/go/adcs-issuer/test/adcs-sim", "ADCS simulator working directory")
-	//caCertFile   = caWorkDir + "/ca/root.pem"
-	//caWorkDir=os.Getenv("workdir")
+
 	caWorkDir=getEnv("workdir","/usr/local/adcs-sim")
 	caCertFile   = caWorkDir + "root.pem"
 	caKeyFile    = caWorkDir + "/ca/root.key"
@@ -62,7 +56,7 @@ var (
 	//scheme    = runtime.NewScheme()
 	setupLog  = ctrl.Log.WithName("adcs-sim")
 	version   = "adcs-sim-by-djkormo"
-	buildTime = "2023-12-31:23:00"
+	buildTime = "2024-02-12:00:00"
 	
 )
 type SimOrders struct {
@@ -93,6 +87,8 @@ func NewCertserv() (*Certserv, error) {
 	}
 	return cs, nil
 }
+
+
 
 func (c *Certserv) HandleCertnewCer(w http.ResponseWriter, req *http.Request) {
 	tmpl, _ := template.ParseFiles(tmplCertnewCer)
