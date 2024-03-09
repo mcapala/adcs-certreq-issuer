@@ -1,11 +1,14 @@
 crd:
   install: true
 
+# ADCS Issuer 
+
 controllerManager:
+
   manager:
     image:
       repository: djkormo/adcs-issuer
-      tag: 2.0.9
+      tag: 2.1.0
     resources:
       limits:
         cpu: 100m
@@ -13,6 +16,23 @@ controllerManager:
       requests:
         cpu: 100m
         memory: 100Mi
+
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 8081
+        scheme: HTTP
+      timeoutSeconds: 10
+      periodSeconds: 10
+
+    readinessProbe:
+      httpGet:
+        path: /readyz
+        port: 8081 
+        scheme: HTTP
+      timeoutSeconds: 20
+      periodSeconds: 20
+      initialDelaySeconds: 10
 
   rbac:
     enabled: true
@@ -36,6 +56,7 @@ controllerManager:
   securityContext:
     runAsUser: 1000
 
+
   enabledWebHooks: false
   enabledCaCerts: false
   caCertsSecretName: ca-certificates
@@ -46,11 +67,16 @@ metricsService:
     port: 8443
     targetPort: https
   type: ClusterIP
+
 webhookService:
   ports:
   - port: 443
     targetPort: 9443
   type: ClusterIP
+
+
+
+# ADCS Simulator 
 
 simulator:
   enabled: true

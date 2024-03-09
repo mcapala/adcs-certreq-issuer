@@ -18,6 +18,16 @@ helm install \
   --set installCRDs=true
 ```
 
+helm search repo cert-manager-csi-driver
+helm search repo cert-manager-csi-driver --versions
+
+helm install \
+  cert-manager-csi-driver jetstack/cert-manager-csi-driver \
+  --namespace cert-manager \
+  --version v0.7.1
+
+
+
 ## Install adcs-issuer 
 
 ### add helm repo

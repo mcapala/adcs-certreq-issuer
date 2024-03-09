@@ -2,13 +2,19 @@ dpl ?= deploy.env
 include $(dpl)
 export $(shell sed 's/=.*//' $(dpl))
 
+COMMIT?=$(shell git rev-parse --short HEAD)
+BUILD_TIME?=$(shell date -u '+%Y-%m-%d_%H:%M:%S')
+PROJECT?=github.com/nokia/adcs-sim/adcs-sim
+
+
 # DOCKER TASKS
 # Build the container
 build: ## Build the container
-	DOCKER_BUILDKIT=1 docker build -t $(APP_NAME) . --progress=plain
+	DOCKER_BUILDKIT=1 docker build -t $(APP_NAME) . --progress=plain --build-arg VERSION=${VERSION} --build-arg  COMMIT=${COMMIT} --build-arg BUILD_TIME=${BUILD_TIME} --build-arg PROJECT=${PROJECT}
 
 build-nc: ## Build the container without caching
-	DOCKER_BUILDKIT=1 docker build --no-cache -t $(APP_NAME) . --progress=plain
+	DOCKER_BUILDKIT=1 docker build --no-cache -t $(APP_NAME) . --progress=plain --build-arg VERSION=${VERSION} --build-arg  COMMIT=${COMMIT} --build-arg BUILD_TIME=${BUILD_TIME} --build-arg PROJECT=${PROJECT}
+
 
 run: ## Run container on port configured in `config.env`
 	docker run --name $(APP_NAME) -it  $(DOCKER_REPO)/$(APP_NAME):latest  bash
@@ -46,3 +52,15 @@ inspect: ## Generate container `latest` tag
 	@echo 'inspect $(APP_NAME)'
 	docker history $(APP_NAME)
 	docker inspect $(APP_NAME)
+
+
+
+.PHONY: operator-build 
+operator-build:
+	go clean 
+	go fmt ## Build manager binary.
+	go vet
+	CGO_ENABLED=0 GOOS=${GOOS} GOARCH=${GOARCH} go build \
+		-ldflags "-s -w -X ${PROJECT}/version.Release=${VERSION} \
+		-X ${PROJECT}/version.Commit=${COMMIT} -X ${PROJECT}/version.BuildTime=${BUILD_TIME}" \
+		-o ${APP_NAME}

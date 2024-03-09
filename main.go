@@ -17,15 +17,17 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
 	"time"
 
-	certmanager "github.com/jetstack/cert-manager/pkg/apis/certmanager/v1"
+	certmanager "github.com/cert-manager/cert-manager/pkg/apis/certmanager/v1"
 	adcsv1 "github.com/nokia/adcs-issuer/api/v1"
 	"github.com/nokia/adcs-issuer/controllers"
 	"github.com/nokia/adcs-issuer/healthcheck"
 	"github.com/nokia/adcs-issuer/issuers"
+	"github.com/nokia/adcs-issuer/version"
 
 	zaplogfmt "github.com/sykesm/zap-logfmt"
 	uzap "go.uber.org/zap"
@@ -42,14 +44,14 @@ import (
 )
 
 const (
-	defaultWebhooksPort int = 9443
+	defaultWebhooksPort    int = 9443
+	defaultMetricsPort     int = 8080 // TODO hardcoded port
+	defaultHealthCheckPort int = 8081 // TODO hardcoded port
 )
 
 var (
-	scheme    = runtime.NewScheme()
-	setupLog  = ctrl.Log.WithName("setup")
-	version   = "adcs-operator-by-djkormo"
-	buildTime = "2022-12-18:11:00"
+	scheme   = runtime.NewScheme()
+	setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
@@ -68,17 +70,17 @@ func main() {
 	var disableApprovedCheck bool
 	var adcsTemplateName string
 
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&healthcheckAddr, "healthcheck-addr", ":8081", "The address the healthcheck endpoints binds to.")
+	flag.StringVar(&metricsAddr, "metrics-bind-address", fmt.Sprintf(":%d", defaultMetricsPort), "The address the metric endpoint binds to.")
+	flag.StringVar(&healthcheckAddr, "healthcheck-addr", fmt.Sprintf(":%d", defaultHealthCheckPort), "The address the healthcheck endpoints binds to.")
 	flag.StringVar(&webhooksPort, "webhooks-port", strconv.Itoa(defaultWebhooksPort), "Port for webhooks requests.")
 	flag.BoolVar(&disableApprovedCheck, "disable-approved-check", false,
 		"Disables waiting for CertificateRequests to have an approved condition before signing.")
 
-	port, err := strconv.Atoi(webhooksPort)
-	if err != nil {
-		setupLog.Error(err, "invalid webhooks port. Using default.")
-		port = defaultWebhooksPort
-	}
+	/* 	port, err := strconv.Atoi(webhooksPort)
+	   	if err != nil {
+	   		setupLog.Error(err, "invalid webhooks port. Using default.")
+	   		port = defaultWebhooksPort
+	   	} */
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.")
 	flag.StringVar(&clusterResourceNamespace, "cluster-resource-namespace", "kube-system", "Namespace where cluster-level resources are stored.")
@@ -107,15 +109,15 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	setupLog.Info("Starting ADCS Issuer", "version", version, "build time", buildTime)
+	setupLog.Info("Starting ADCS Issuer", "Version", version.Version, "BuildTime", version.BuildTime, "Release", version.Release, "Commit", version.Commit)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
+		Scheme: scheme,
+		//MetricsBindAddress:     metricsAddr, //unknown field MetricsBindAddress in struct literal of type manager.Options
 		HealthProbeBindAddress: healthcheckAddr,
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "adcs-issuer-controller",
-		Port:                   port,
+		//Port:                   port, //unknown field Port in struct literal of type manager.Options
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -158,13 +160,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "AdcsIssuer")
 		os.Exit(1)
 	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&adcsv1.AdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "AdcsIssuer")
-			os.Exit(1)
-		}
-	}
 
+	/* 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	   		if err = (&adcsv1.AdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
+	   			setupLog.Error(err, "unable to create webhook", "webhook", "AdcsIssuer")
+	   			os.Exit(1)
+	   		}
+	   	}
+	*/
 	if err = (&controllers.ClusterAdcsIssuerReconciler{
 		Client: mgr.GetClient(),
 		Log:    ctrl.Log.WithName("controllers").WithName("ClusterAdcsIssuer"),
@@ -172,12 +175,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ClusterAdcsIssuer")
 		os.Exit(1)
 	}
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	/* 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&adcsv1.ClusterAdcsIssuer{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "ClusterAdcsIssuer")
 			os.Exit(1)
 		}
-	}
+	} */
 	// +kubebuilder:scaffold:builder
 
 	setupLog.Info("starting manager")

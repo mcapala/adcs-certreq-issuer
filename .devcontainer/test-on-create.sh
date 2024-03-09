@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 set -u
@@ -5,7 +6,7 @@ set -e
 set -x
 
 KUBERNETES_VERSION=v1.26.1
-GO_VERSION=1.17.8
+GO_VERSION=1.21.7
 OPERATOR_SDK_VERSION=v1.19.x
 CERT_MANAGER_VERSION=v1.12.6 
 
@@ -155,3 +156,4 @@ echo "alias kubens='kubectl config set-context --current --namespace ' " >> ~/.b
 echo "alias kge='kubectl get events --sort-by=.metadata.creationTimestamp' " >> ~/.bashrc 
 
 echo "done"
+

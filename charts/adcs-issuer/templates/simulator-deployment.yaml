@@ -17,6 +17,12 @@ spec:
       labels:
         control-plane: adcs-sim
     spec:
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: "topology.kubernetes.io/zone"
+          whenUnsatisfiable: ScheduleAnyway
+          
       securityContext:
         {{- toYaml  .Values.simulator.podSecurityContext | nindent 8 }}
       containers:
@@ -69,10 +75,6 @@ spec:
         securityContext:
         {{- toYaml  .Values.simulator.containerSecurityContext | nindent 10 }}
 
-        {{- with .Values.livenessProbe }}
-        livenessProbe:
-          {{- toYaml . | nindent 10 }}
-        {{- end }}
 
         {{- with .Values.simulator.readinessProbe }}
         readinessProbe:

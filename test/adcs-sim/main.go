@@ -27,6 +27,7 @@ import (
 	"sync/atomic"
 
 	"github.com/nokia/adcs-issuer/test/adcs-sim/certserv"
+	"github.com/nokia/adcs-sim/adcs-sim/version"
 
 	"io/ioutil"
 	"log"
@@ -41,6 +42,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	//"github.com/Azure/go-ntlmssp"
 )
 
 var (
@@ -60,11 +62,14 @@ func getEnv(key, fallback string) string {
 }
 
 var (
-	//scheme    = runtime.NewScheme()
-	setupLog  = ctrl.Log.WithName("adcs-sim")
-	version   = "adcs-sim-by-djkormo"
-	buildTime = "2024-01-01:16:00"
-	//buildTime= time.Now().UTC().Format("2006-01-02 15:04:05")
+	setupLog = ctrl.Log.WithName("adcs-sim")
+	Version  = "unset"
+	// BuildTime is a time label of the moment when the binary was built
+	BuildTime = "unset"
+	// Commit is a last commit hash at the moment when the binary was built
+	Commit = "unset"
+	// Release is a semantic version of current build
+	Release = "unset"
 )
 
 func main() {
@@ -94,7 +99,7 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	setupLog.Info("Starting ADCS Simulator", "version", version, "build time", buildTime)
+	setupLog.Info("Starting ADCS Simulator", "Project", version.Project, "BuildTime", version.BuildTime, "Release", version.Release, "Commit", version.Commit)
 	setupLog.Info("Http", "port ", port)
 	setupLog.Info("Directories in in /ca", "directory", caWorkDir)
 
@@ -141,15 +146,18 @@ func main() {
 	isReady.Store(false)
 
 	go func() {
-		setupLog.Info("HandleHealthz","Readyz probe is negative by default...","")
-		time.Sleep(5* time.Second) // 5 seconds hardcoded
+		setupLog.Info("HandleHealthz", "Readyz probe is negative by default...", "")
+		time.Sleep(5 * time.Second) // 5 seconds hardcoded
 		isReady.Store(true)
-		setupLog.Info("HandleHealthz","Readyz probe is positive","")
+		setupLog.Info("HandleHealthz", "Readyz probe is positive", "")
 	}()
 
-	//TODO ADD livenes and readiness
+	//http.HandleFunc("/", greeting)
+
+	//livenes and readiness
 	http.HandleFunc("/healthz", HandleHealthz)
 	http.HandleFunc("/readyz", HandleReadyz(isReady))
+
 	//http.HandleFunc("/readyz", HandleReadyz)
 	http.HandleFunc("/certnew.cer", certserv.HandleCertnewCer)
 	http.HandleFunc("/certnew.p7b", certserv.HandleCertnewP7b)
@@ -248,26 +256,61 @@ func generateServerCertificate(cs *certserv.Certserv, ips *string, dns *string) 
 	return nil
 }
 
-
 //Based on https://blog.gopheracademy.com/advent-2017/kubernetes-ready-service/
 
 // Liveness
 
 func HandleHealthz(w http.ResponseWriter, r *http.Request) {
-	setupLog.Info("HandleHealthz","check","Ok")
+	setupLog.Info("HandleHealthz", "check", "Ok")
 	w.WriteHeader(http.StatusOK)
 
 	return
 }
 
 // Readiness
- func  HandleReadyz(isReady *atomic.Value) http.HandlerFunc {
+func HandleReadyz(isReady *atomic.Value) http.HandlerFunc {
 	return func(w http.ResponseWriter, _ *http.Request) {
- 		if isReady == nil || !isReady.Load().(bool) {
- 			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
- 			return
- 		}
-		setupLog.Info("HandleReadyz","check","Ok")
- 		w.WriteHeader(http.StatusOK)
- 	}
- } 
+		if isReady == nil || !isReady.Load().(bool) {
+			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+			return
+		}
+		setupLog.Info("HandleReadyz", "check", "Ok")
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// https://umesh.dev/posts/how-to-implement-http-basic-auth-in-gogolang
+var users = map[string]string{
+	"test": "secret",
+}
+
+func isAuthorised(username, password string) bool {
+	pass, ok := users[username]
+	if !ok {
+		return false
+	}
+
+	return password == pass
+}
+
+func greeting(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "No basic auth present"}`))
+		return
+	}
+
+	if !isAuthorised(username, password) {
+		w.Header().Add("WWW-Authenticate", `Basic realm="Give username and password"`)
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"message": "Invalid username or password"}`))
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "welcome to golang world!"}`))
+	return
+}
