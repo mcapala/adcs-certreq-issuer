@@ -15,7 +15,7 @@ jobs:
 
       - name: Get the tag version for building image
         id: get_version
-        run: echo ::set-env name=VERSION::${GITHUB_REF#refs/tags/}
+        run: echo ::set-env name=VERSION::$)git tag --sort=taggerdate -l [0-9]* | tail -n1)
 
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
