@@ -10,19 +10,6 @@ This implementation is simply a HTTP client that interacts with the ADCS server 
 It supports NTLM authentication.
 
 
-
-### TODO 
-
-Check issues!!!
-
-
-1. Make helm chart for adcs-issuer
-
-2. Correct RBAC for cert-manager
-
-
-
-
 Build statuses:
 
 
@@ -38,10 +25,27 @@ Build statuses:
 [![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
 
 
+
+## Current documentation for this issuer 
+
+===========================
+
+https://djkormo.github.io/adcs-issuer/
+
+===========================
+
+**All below information will be removed in next few releases**
+
+
+
+
+
+#################################
+
 ## Description
 
 ### Requirements
-ADCS Issuer has been tested with cert-manager v1.9.x and currently supports CertificateRequest CRD API version v1 only.
+ADCS Issuer has been tested with cert-manager v1.9.x, v1.12.x and currently supports CertificateRequest CRD API version v1 only.
 
 ## Configuration and usage
 
