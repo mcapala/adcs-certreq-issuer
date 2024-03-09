@@ -31,7 +31,6 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
           PROJECT: 'github.com/nokia/adcs-sim/adcs-sim' 
           
-        run: echo VERSION $VERSION - PROJECT $PROJECT - COMMIT $COMMIT - BUILD_TIME $BUILD_TIME
         with:
           name: djkormo/adcs-issuer
           buildargs: PROJECT,COMMIT,BUILD_TIME,VERSION
