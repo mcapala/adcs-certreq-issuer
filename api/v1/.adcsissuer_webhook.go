@@ -14,8 +14,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/jetstack/cert-manager/pkg/util/pki"
+	"github.com/cert-manager/cert-manager/pkg/util/pki"
 )
 
 var log = logf.Log.WithName("adcsissuer-resource")
@@ -47,39 +48,39 @@ func (r *AdcsIssuer) Default() {
 var _ webhook.Validator = &AdcsIssuer{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateCreate() error {
+func (r *AdcsIssuer) ValidateCreate() (warnings admission.Warnings, err error) {
 	log.Info("validate create", "name", r.Name)
 
 	return r.validateAdcsIssuer()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateUpdate(old runtime.Object) error {
+func (r *AdcsIssuer) ValidateUpdate(old runtime.Object) (warnings admission.Warnings, err error) {
 	log.Info("validate update", "name", r.Name)
 
 	return r.validateAdcsIssuer()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *AdcsIssuer) ValidateDelete() error {
+func (r *AdcsIssuer) ValidateDelete() (warnings admission.Warnings, err error) {
 	log.Info("validate delete", "name", r.Name)
 
-	return nil
+	return nil, nil
 }
 
-func (r *AdcsIssuer) validateAdcsIssuer() error {
+func (r *AdcsIssuer) validateAdcsIssuer() (warnings admission.Warnings, err error) {
 	var allErrs field.ErrorList
 
 	// Validate RetryInterval
-	_, err := time.ParseDuration(r.Spec.RetryInterval)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("retryInterval"), r.Spec.RetryInterval, err.Error()))
+	_, err_val := time.ParseDuration(r.Spec.RetryInterval)
+	if err_val != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("retryInterval"), r.Spec.RetryInterval, err_val.Error()))
 	}
 
 	// Validate Status Check Interval
-	_, err = time.ParseDuration(r.Spec.StatusCheckInterval)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("statusCheckInterval"), r.Spec.StatusCheckInterval, err.Error()))
+	_, err_val = time.ParseDuration(r.Spec.StatusCheckInterval)
+	if err_val != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("statusCheckInterval"), r.Spec.StatusCheckInterval, err_val.Error()))
 	}
 
 	// Validate URL. Must be valide http or https URL
@@ -89,18 +90,18 @@ func (r *AdcsIssuer) validateAdcsIssuer() error {
 	}
 
 	// Validate CA Bundle. Must be a valid certificate PEM.
-	_, err = pki.DecodeX509CertificateBytes(r.Spec.CABundle)
-	if err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("caBundle"), r.Spec.CABundle, err.Error()))
+	_, err_val = pki.DecodeX509CertificateBytes(r.Spec.CABundle)
+	if err_val != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("caBundle"), r.Spec.CABundle, err_val.Error()))
 	}
 
 	// TODO: Validate credentials secret name?
 
 	if len(allErrs) == 0 {
-		return nil
+		return nil, nil
 	}
 	return apierrors.NewInvalid(
 		schema.GroupKind{Group: "adcs.certmanager.csf.nokia.com", Kind: "AdcsIssuer"},
-		r.Name, allErrs)
+		r.Name, allErrs), nil
 
 }
