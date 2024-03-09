@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 set -u
@@ -78,7 +79,7 @@ rm -fr operator-sdk
 alias k='kubectl'
 alias kubectx='kubectl config use-context '
 alias kubens='kubectl config set-context --current --namespace '
-
+alias kge='kubectl get events --sort-by=.metadata.creationTimestamp'
 
 # krew plugins 
 
@@ -139,12 +140,20 @@ helm repo add djkormo-adcs-issuer https://djkormo.github.io/adcs-issuer/ --force
 helm search repo adcs-issuer  --versions
 
 
-code --install-extension redhat.vscode-yaml --force
-code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
+#code --install-extension redhat.vscode-yaml --force
+#code --install-extension ms-kubernetes-tools.vscode-kubernetes-tools --force
 
-code --install-extension golang.Go --force
-code --install-extension 766b.go-outliner --force
+#code --install-extension golang.Go --force
+#code --install-extension 766b.go-outliner --force
 
-code --install-extension mhutchie.git-graph --force
+#code --install-extension mhutchie.git-graph --force
+
+
+
+echo "alias k='kubectl' " >> ~/.bashrc 
+echo "alias kubectx='kubectl config use-context ' " >> ~/.bashrc 
+echo "alias kubens='kubectl config set-context --current --namespace ' " >> ~/.bashrc 
+echo "alias kge='kubectl get events --sort-by=.metadata.creationTimestamp' " >> ~/.bashrc 
 
 echo "done"
+
