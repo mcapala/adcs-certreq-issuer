@@ -8,7 +8,7 @@ controllerManager:
   manager:
     image:
       repository: djkormo/adcs-issuer
-      tag: 2.0.9
+      tag: 2.1.0
     resources:
       limits:
         cpu: 100m
@@ -41,7 +41,7 @@ controllerManager:
     certManagerServiceAccountName: cert-manager 
 
 
-  replicas: 2
+  replicas: 1
 
   environment:
     KUBERNETES_CLUSTER_DOMAIN: cluster.local
