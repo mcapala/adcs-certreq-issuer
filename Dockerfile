@@ -46,3 +46,4 @@ USER nonroot:nonroot
 
 ENTRYPOINT ["/manager"]
 
+
