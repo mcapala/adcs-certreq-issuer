@@ -66,7 +66,7 @@ jobs:
       uses: aquasecurity/trivy-action@master
       with:
 
-        image-ref: djkormo/adcs-issuer:dev
+        image-ref: djkormo/adcs-issuer:master
 
         format: 'table'
         exit-code: '1'
