@@ -16,7 +16,6 @@ jobs:
       - name: Get the tag version for building image
         id: get_version
         run: echo ::set-env name=VERSION::$(git tag --sort=taggerdate -l [0-9]* | tail -n1)
-
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
           
@@ -32,7 +31,7 @@ jobs:
         uses: elgohr/Publish-Docker-Github-Action@master
         env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-          PROJECT: 'github.com/nokia/adcs-sim/adcs-sim' 
+          PROJECT: github.com/nokia/adcs-issuer
           
         with:
           name: djkormo/adcs-issuer

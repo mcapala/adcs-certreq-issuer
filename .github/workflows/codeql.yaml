@@ -16,7 +16,7 @@ on:
 
       
 jobs:
-  CodeQL-Build:
+  CodeQL:
 
     strategy:
       fail-fast: false
