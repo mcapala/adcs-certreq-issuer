@@ -104,5 +104,9 @@ spec:
           secret:
             secretName: {{.Values.simulator.secretCertificateName | default "adcs-sim-certificate-secret" }} # secret for storing ca key
 
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 
 {{- end  }}    
