@@ -112,3 +112,8 @@ spec:
           defaultMode: 420
           secretName: {{ .Values.controllerManager.caCertsSecretName| default "ca-certificates" }} 
       {{- end }}  
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
