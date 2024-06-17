@@ -1,6 +1,6 @@
 name: operator pipeline
-  workflow_dispatch:
   on:
+    workflow_dispatch:
     push:
       paths:
         - 'api/**.go'
