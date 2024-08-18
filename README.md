@@ -13,8 +13,6 @@ It supports NTLM authentication.
 Build statuses:
 
 
-[![operator pipeline](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/pipeline.yaml)
-
 
 [![Code scanning - action](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/codeql.yaml)
 
@@ -23,6 +21,9 @@ Build statuses:
 
 
 [![Release helm charts](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/helm-chart-releaser.yaml)
+
+
+[![Golang lint issuer](https://github.com/djkormo/adcs-issuer/actions/workflows/golangci-lint.yaml/badge.svg)](https://github.com/djkormo/adcs-issuer/actions/workflows/golangci-lint.yaml)
 
 
 
