@@ -1,0 +1,48 @@
+name: Publish Docker image on Release
+
+on:
+  workflow_dispatch:
+    branches: [ main ]
+  release:
+    types: [published]
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Get the tag version for building image
+        id: get_version
+        run: echo "VERSION=$(echo $GITHUB_REF | cut -d / -f 3)" >> $GITHUB_OUTPUT
+
+          
+      - name: Get current date  for building image
+        id: get_date
+        run: echo "BUILD_TIME=$(date -u '+%Y-%m-%d_%H:%M:%S')" >> $GITHUB_OUTPUT
+
+      - name: Get commit hash  for building image
+        id: get_commit
+        run: echo "COMMIT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Print name
+        id: print_args 
+        run: echo "Hello VERSION. ${{ steps.get_version.outputs.VERSION }} . COMMIT. ${{ steps.get_commit.outputs.COMMIT }} BUILD_TIME. ${{steps.get_date.outputs.BUILD_TIME }}"
+
+
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@v5
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+          PROJECT: github.com/djkormo/adcs-issuer
+          COMMIT:  ${{ steps.get_commit.outputs.COMMIT }}
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+          BUILD_TIME: ${{steps.get_date.outputs.BUILD_TIME }}
+        with:
+          name: djkormo/adcs-issuer 
+          buildargs: PROJECT,COMMIT,BUILD_TIME,VERSION
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          tags: "latest,${{ env.VERSION }}"
+          tag_semver: true
