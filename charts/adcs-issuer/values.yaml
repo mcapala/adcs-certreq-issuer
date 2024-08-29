@@ -146,7 +146,7 @@ simulator:
   secretCertificateName: adcs-sim-certificate-secret  # Name of the secret for simulator certificates.
   secretName: adcs-sim-secret                 # Name of the secret for simulator credentials.
   serviceName: adcs-sim-service               # Name of the service for the simulator.
-  
+
   # @section Certificate
   # Certificate settings for the simulator, managed by cert-manager.
   issuerName: adcs-sim-issuer                 # Name of the cert-manager issuer to use.
@@ -154,6 +154,7 @@ simulator:
   issuerGroup: cert-manager.io                # API group of the issuer.
   certificateDuration: 2160h                  # Duration of the certificate validity (default: 90 days).
   certificateRenewBefore: 360h                # When to renew the certificate before expiry (default: 15 days).
+  caBundle: ""                               # CA bundle for the certificate.
 
   # @section Image
   # Image settings for the ADCS Simulator.
@@ -254,7 +255,7 @@ simulator:
       memory: 500Mi
     requests:
       cpu: 100m
-      memory: 100Mi  
+      memory: 100Mi
 
   # @section Example Certificate
   # Configuration for an example certificate used by the simulator.
