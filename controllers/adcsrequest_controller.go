@@ -122,7 +122,7 @@ func (r *AdcsRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 
 		// CA cert is inside the cert above
 		// cr.Status.CA = caCert
-		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
+		err = r.CertificateRequestController.SetStatus(ctx, &cr, cmmeta.ConditionFalse, cmapi.CertificateRequestReasonIssued, "ADCS request successful")
 		if err != nil {
 			log.Error(err, "Failed request will be re-tried", "retry interval", issuer.RetryInterval)
 			return ctrl.Result{Requeue: true, RequeueAfter: issuer.RetryInterval}, nil

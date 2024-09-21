@@ -122,11 +122,9 @@ func (r *CertificateRequestReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 	}
 
-	// If the certificate data is already set then we skip this request as it
-	// has already been completed in the past.
 	if len(cr.Status.Certificate) > 0 {
-		klog.V(4).Info("existing certificate data found in status, skipping already completed CertificateRequest")
-		return ctrl.Result{}, nil
+		log.V(4).Info("Certificate data found in CertificateRequest, setting as ready")
+		return ctrl.Result{}, r.SetStatus(ctx, &cr, cmmeta.ConditionTrue, cmapi.CertificateRequestReasonIssued, "ADCS request successful and certificate set")
 	}
 
 	adcsReq := new(api.AdcsRequest)
