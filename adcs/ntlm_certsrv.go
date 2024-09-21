@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	neturl "net/url"
 	"os"
-	"regexp"
+
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"strings"
 
 	"github.com/Azure/go-ntlmssp"
-	"k8s.io/klog"
 )
 
 type NtlmCertsrv struct {
@@ -26,11 +24,23 @@ type NtlmCertsrv struct {
 	httpClient *http.Client
 }
 
+type ProxyResponse struct {
+    Status           string `json:"status"`
+    Certificate      string `json:"certificate"`
+    StatusDescription string `json:"status_description"`
+    RequestID        string `json:"request_id"`
+    Error            string `json:"error"`
+}
+
 const (
 	certnew_cer = "certnew.cer"
 	certnew_p7b = "certnew.p7b"
 	certcarc    = "certcarc.asp"
 	certfnsh    = "certfnsh.asp"
+
+	getCertificateEndpoint = "getCertificate"
+	requestCertificateEndpoint = "requestCertificate"
+	getCAEndpoint = "getCA"
 
 	ct_pkix   = "application/pkix-cert"
 	ct_pkcs7  = "application/x-pkcs7-certificates"
@@ -122,90 +132,75 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
 	log := log.Log.WithName("GetExistingCertificate")
 	var certStatus AdcsResponseStatus = Unknown
 
-	url := fmt.Sprintf("%s/%s?ReqID=%s&ENC=b64", s.url, certnew_cer, id)
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Making url request", "url", url)
-	}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
-	req.Header.Set("User-agent", "Mozilla")
-	res, err := s.httpClient.Do(req)
-
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Making url request", "res", res)
-	}
-
+	url := fmt.Sprintf("%s/%s", s.url, getCertificateEndpoint)
+    payload := map[string]string{
+        "request_id": id,
+    }
+    payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		log.Error(err, "ADCS Certserv error")
-		return certStatus, "", id, err
-	}
+        log.Error(err, "Failed to marshal JSON payload")
+        return certStatus, "", id, err
+    }
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+
+    if err != nil {
+        log.Error(err, "Failed to create HTTP request")
+        return certStatus, "", id, err
+    }
+
+    req.SetBasicAuth(s.username, s.password)
+    req.Header.Set("Content-Type", "application/json")
+
+	res, err := s.httpClient.Do(req)
+	if err != nil {
+        log.Error(err, "Failed to send HTTP request")
+        return certStatus, "", id, err
+    }
 	defer res.Body.Close()
 
-	if res.StatusCode == http.StatusOK {
-		switch ct := strings.Split(res.Header.Get("content-type"), ";"); ct[0] {
-		case ct_html:
-			// Denied or pending
-			body, err := io.ReadAll(res.Body)
-			if err != nil {
-				log.Error(err, "Cannot read ADCS Certserv response")
-				return certStatus, "", id, err
-			}
-			bodyString := string(body)
-			dispositionMessage := "unknown"
-			exp := regexp.MustCompile(`Disposition message:[^\t]+\t\t([^\r\n]+)`)
-			found := exp.FindStringSubmatch(bodyString)
-			if len(found) > 1 {
-				dispositionMessage = found[1]
-				expPending := regexp.MustCompile(`.*Taken Under Submission*.`)
-				expRejected := regexp.MustCompile(`.*Denied by*.`)
-				switch true {
-				case expPending.MatchString(bodyString):
-					certStatus = Pending
-				case expRejected.MatchString(bodyString):
-					certStatus = Rejected
-				default:
-					certStatus = Errored
-				}
+    body, err := io.ReadAll(res.Body)
+    if err != nil {
+        log.Error(err, "Failed to read response body")
+        return certStatus, "", id, err
+    }
 
-			} else {
-				// If the response page is not formatted as we expect it
-				// we just log the entire page
-				disp := bodyString
-				if len(found) == 1 {
-					// Or at least the 'Disposition message' section
-					disp = found[0]
-				}
-				err = fmt.Errorf("disposition message unknown: %s", disp)
-				log.Error(err, "Unknown error with ADCS")
-			}
+    if res.StatusCode != http.StatusOK {
+        errMsg := fmt.Sprintf("Proxy server returned status %d: %s", res.StatusCode, string(body))
+        log.Error(fmt.Errorf(errMsg), "non-OK HTTP status")
+        return certStatus, "", id, fmt.Errorf(errMsg)
+    }
 
-			lastStatusMessage := ""
-			exp = regexp.MustCompile(`LastStatus:[^\t]+\t\t([^\r\n]+)`)
-			found = exp.FindStringSubmatch(bodyString)
-			if len(found) > 1 {
-				lastStatusMessage = " " + found[1]
-			} else {
-				log.Info("Last status unknown.")
-				log.V(5).Info("Last status unknown.")
-			}
-			return certStatus, dispositionMessage + lastStatusMessage, id, err
+    var proxyResp ProxyResponse
+    err = json.Unmarshal(body, &proxyResp)
+    if err != nil {
+        log.Error(err, "Failed to unmarshal JSON response")
+        return certStatus, "", id, err
+    }
 
-		case ct_pkix:
-			// Certificate
-			cert, err := io.ReadAll(res.Body)
-			if err != nil {
-				log.Error(err, "Cannot read ADCS Certserv response")
-				return certStatus, "", id, err
-			}
-			return Ready, string(cert), id, nil
-		default:
-			err = fmt.Errorf("unexpected content type %s:", ct)
-			log.Error(err, "Unexpected content type")
-			return certStatus, "", id, err
-		}
+	// Encode status as an integer
+
+	if proxyResp.Status == "Ready" {
+		certStatus = Ready
+	} else if proxyResp.Status == "Pending" {
+		certStatus = Pending
+	} else if proxyResp.Status == "Errored" {
+		certStatus = Errored
+	} else {
+		certStatus = Unknown
 	}
-	return certStatus, "", id, fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res.Status, err.Error())
 
+    if certStatus == Ready {
+        // Decode the base64-encoded certificate
+        decodedCert, err := base64.StdEncoding.DecodeString(proxyResp.Certificate)
+        if err != nil {
+            log.Error(err, "Failed to decode certificate")
+            return certStatus, "", id, err
+        }
+        return certStatus, string(decodedCert), id, nil
+    }
+
+    // Return status description if not Ready
+    return certStatus, proxyResp.StatusDescription, id, nil
 }
 
 /*
@@ -216,178 +211,136 @@ func (s *NtlmCertsrv) GetExistingCertificate(id string) (AdcsResponseStatus, str
  * - Error
  */
 func (s *NtlmCertsrv) RequestCertificate(csr string, template string) (AdcsResponseStatus, string, string, error) {
-	log := log.Log.WithName("RequestCertificate").WithValues("template", template)
-	var certStatus AdcsResponseStatus = Unknown
+    log := log.Log.WithName("RequestCertificate").WithValues("template", template)
+    var certStatus AdcsResponseStatus = Unknown
 
-	log.V(1).Info("Starting certificate request")
+    log.Info("Starting certificate request")
 
-	url := fmt.Sprintf("%s/%s", s.url, certfnsh)
-	log.Info("Starting certificate request", "url", url)
-	params := neturl.Values{
-		"Mode":                {"newreq"},
-		"CertRequest":         {csr},
-		"CertAttrib":          {"CertificateTemplate:" + template},
-		"FriendlyType":        {"Saved-Request Certificate"},
-		"TargetStoreFlags":    {"0"},
-		"SaveCert":            {"yes"},
-		"CertificateTemplate": {template},
-	}
+    url := fmt.Sprintf("%s/requestCertificate", s.url)
+    log.Info("Sending request to proxy server", "url", url)
 
-	req, err := http.NewRequest("POST", url, bytes.NewBufferString(params.Encode()))
+    // Encode the CSR in base64
+    csrB64 := base64.StdEncoding.EncodeToString([]byte(csr))
 
-	if err != nil {
-		log.Error(err, "Cannot create request")
-		return certStatus, "", "", err
-	}
-	req.SetBasicAuth(s.username, s.password)
-	klog.V(5).Infof("Username as BasicAuth: \n %v ", s.username)
+    // Prepare request payload
+    payload := map[string]string{
+        "csr":          csrB64,
+        "template_name": template,
+    }
+    payloadBytes, err := json.Marshal(payload)
+    if err != nil {
+        log.Error(err, "Failed to marshal JSON payload")
+        return certStatus, "", "", err
+    }
 
-	req.Header.Set("User-agent", "Mozilla")
-	req.Header.Set("Content-type", ct_urlenc)
+    req, err := http.NewRequest("POST", url, bytes.NewBuffer(payloadBytes))
+    if err != nil {
+        log.Error(err, "Failed to create HTTP request")
+        return certStatus, "", "", err
+    }
 
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Sending request", "request", req)
-	}
+    req.SetBasicAuth(s.username, s.password)
+    req.Header.Set("Content-Type", "application/json")
 
-	res, err := s.httpClient.Do(req)
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Sending request", "error", err)
-		log.Info("Sending request", "response", res)
-		//log.Info("Sending request", "response Header", res.Header)
-		//log.Info("Sending request", "response Request.URL", res.Request.URL)
-		//log.Info("Sending request", "Status Request.URL", res.Status)
-	}
+    res, err := s.httpClient.Do(req)
+    if err != nil {
+        log.Error(err, "Failed to send HTTP request")
+        return certStatus, "", "", err
+    }
+    defer res.Body.Close()
 
-	if err != nil {
-		log.Error(err, "ADCS Certserv error")
-		return certStatus, "", "", err
-	}
+    body, err := io.ReadAll(res.Body)
+    if err != nil {
+        log.Error(err, "Failed to read response body")
+        return certStatus, "", "", err
+    }
 
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Sending request", "response", res)
-	}
+    if res.StatusCode != http.StatusOK {
+        errMsg := fmt.Sprintf("Proxy server returned status %d: %s", res.StatusCode, string(body))
+        log.Error(fmt.Errorf(errMsg), "Non-OK HTTP status")
+        return certStatus, "", "", fmt.Errorf(errMsg)
+    }
 
-	body, err := io.ReadAll(res.Body)
+    var proxyResp ProxyResponse
+    err = json.Unmarshal(body, &proxyResp)
+    if err != nil {
+        log.Error(err, "Failed to unmarshal JSON response")
+        return certStatus, "", "", err
+    }
 
-	log.Info("Body", "body", body)
-
-	if res.Header.Get("Content-type") == ct_pkix {
-		// klog.V(4).Infof("klog_v4: returned [Ready] %v", Ready)
-		return Ready, string(body), "none", nil
-	}
-	if err != nil {
-		log.Error(err, "Cannot read ADCS Certserv response")
-		return certStatus, "", "", err
-	}
-
-	bodyString := string(body)
-
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("Body", "body", bodyString)
-	}
-
-	exp := regexp.MustCompile(`certnew.cer\?ReqID=([0-9]+)&`)
-	found := exp.FindStringSubmatch(bodyString)
-	certId := ""
-	if len(found) > 1 {
-		certId = found[1]
+	if proxyResp.Status == "Ready" {
+		certStatus = Ready
+	} else if proxyResp.Status == "Pending" {
+		certStatus = Pending
+	} else if proxyResp.Status == "Errored" {
+		certStatus = Errored
 	} else {
-		exp = regexp.MustCompile(`Your Request Id is ([0-9]+).`)
-		found = exp.FindStringSubmatch(bodyString)
-		if len(found) > 1 {
-			certId = found[1]
-		} else {
-			errorString := ""
-			exp = regexp.MustCompile(`The disposition message is "([^"]+)`)
-			found = exp.FindStringSubmatch(bodyString)
-			var errorContext []interface{}
-			if len(found) > 1 {
-				errorString = found[1]
-			} else {
-				errorString = "Unknown error occured"
-				errorContext = []interface{}{"body", bodyString}
-			}
-			err := errors.New(errorString)
-			// TODO
-			log.Error(err, "Couldn't obtain new certificate ID", errorContext...)
-			return certStatus, "", "", fmt.Errorf(errorString)
-		}
+		certStatus = Unknown
 	}
 
-	return s.GetExistingCertificate(certId)
+    requestID := proxyResp.RequestID
+
+    if certStatus == Ready {
+        // Decode the base64-encoded certificate
+        decodedCert, err := base64.StdEncoding.DecodeString(proxyResp.Certificate)
+        if err != nil {
+            log.Error(err, "Failed to decode certificate")
+            return certStatus, "", requestID, err
+        }
+        return certStatus, string(decodedCert), requestID, nil
+    }
+
+    // Return status description if not Ready
+    return certStatus, proxyResp.StatusDescription, requestID, nil
 }
 
 func (s *NtlmCertsrv) obtainCaCertificate(certPage string, expectedContentType string) (string, error) {
 	log := log.Log.WithName("obtainCaCertificate")
 
-	// Check for newest renewal number
-	url := fmt.Sprintf("%s/%s", s.url, certcarc)
+	url := fmt.Sprintf("%s/%s", s.url, getCAEndpoint)
 	// klog.V(4).Infof("inside obtainCaCertificate: going to url: %v ", url)
 	req, _ := http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
-	req.Header.Set("User-agent", "Mozilla")
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("obtainCaCertificate start", "req", req, "url", url)
-		log.Info("obtainCaCertificate start", "password", s.password, "username", s.username)
-	}
-	res1, err := s.httpClient.Do(req)
 
-	if os.Getenv("ENABLE_DEBUG") == "true" {
-		log.Info("obtainCaCertificate start", "res1", res1)
-	}
+    req.SetBasicAuth(s.username, s.password)
+    req.Header.Set("Content-Type", "application/json")
 
+    res, err := s.httpClient.Do(req)
+    if err != nil {
+        log.Error(err, "Failed to send HTTP request")
+        return "", err
+    }
+    defer res.Body.Close()
+
+    body, err := io.ReadAll(res.Body)
+    if err != nil {
+        log.Error(err, "Failed to read response body")
+        return "", err
+    }
+
+    if res.StatusCode != http.StatusOK {
+        errMsg := fmt.Sprintf("Proxy server returned status %d: %s", res.StatusCode, string(body))
+        log.Error(fmt.Errorf(errMsg), "Non-OK HTTP status")
+        return "", fmt.Errorf(errMsg)
+    }
+
+    var proxyResp ProxyResponse
+    err = json.Unmarshal(body, &proxyResp)
 	if err != nil {
-		log.Error(err, "ADCS Certserv error")
+        log.Error(err, "Failed to unmarshal JSON response")
+        return "", err
+    }
+
+	if proxyResp.Status != "Ready" {
+		return "", fmt.Errorf("CA certificate not ready")
+	}
+
+	// Decode the base64-encoded certificate
+	decodedCert, err := base64.StdEncoding.DecodeString(proxyResp.Certificate)
+	if err != nil {
+		log.Error(err, "Failed to decode certificate")
 		return "", err
 	}
-	defer res1.Body.Close()
-	body, err := io.ReadAll(res1.Body)
-	if err != nil {
-		log.Error(err, "Cannot read ADCS Certserv response")
-		return "", err
-	}
-
-	renewal := "0"
-	exp := regexp.MustCompile(`var nRenewals=([0-9]+);`)
-	found := exp.FindStringSubmatch(string(body))
-	if len(found) > 1 {
-		renewal = found[1]
-	} else {
-		log.Info("Renewal not found. Using '0'.")
-	}
-
-	// Get CA cert (newest renewal number)
-	url = fmt.Sprintf("%s/%s?ReqID=CACert&ENC=b64&Renewal=%s", s.url, certPage, renewal)
-	req, _ = http.NewRequest("GET", url, nil)
-	req.SetBasicAuth(s.username, s.password)
-	req.Header.Set("User-agent", "Mozilla")
-
-	res2, err := s.httpClient.Do(req)
-
-	// klog.V(4).Infof("Response Getting CAcert obtainingCaCertificate: %v ", res2)
-
-	if err != nil {
-		log.Error(err, "ADCS Certserv error")
-		return "", err
-	}
-	defer res2.Body.Close()
-
-	if res2.StatusCode == http.StatusOK {
-		ct := res2.Header.Get("content-type")
-		if expectedContentType != ct {
-			err = errors.New("Unexpected content type")
-			log.Error(err, err.Error(), "content type", ct)
-			return "", err
-		}
-		body, err := io.ReadAll(res2.Body)
-		if err != nil {
-			log.Error(err, "Cannot read ADCS Certserv response")
-			return "", err
-		}
-		// klog.V(4).Infof("return body adcs certserv response: %v ", body)
-		return string(body), nil
-	}
-	return "", fmt.Errorf("ADCS Certsrv response status %s. Error: %s", res2.Status, err.Error())
+	return string(decodedCert), nil
 }
 func (s *NtlmCertsrv) GetCaCertificate() (string, error) {
 	log.Log.WithName("GetCaCertificate").Info("Getting CA from ADCS Certsrv", "url", s.url)
